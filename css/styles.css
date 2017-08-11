@@ -1,0 +1,25 @@
+body {
+    background-color: #303030;
+/*     font-family: roboto; */
+}
+@font-face {
+  font-family: 'roboto';
+  src: url('roboto-regular.ttf'); /* IE9 Compat Modes */
+}
+* { 
+    font-family: roboto;
+    color: white
+}
+
+h1 {
+    color: white;
+    text-align: center;
+}
+
+p {
+    font-size: 20px;
+}
+
+button {
+    color: chocolate
+}
