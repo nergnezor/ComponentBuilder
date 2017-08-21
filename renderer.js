@@ -18,12 +18,11 @@ edgehandles(cytoscape);
 
 const selectDirBtn = document.getElementById('select-file')
 
-selectDirBtn.addEventListener('click', function(event) {
+selectDirBtn.addEventListener('click', function (event) {
     ipc.send('open-file-dialog')
 })
 
-ipc.on('selected-file', function(event, path) {
-    document.getElementById('selected-file').innerHTML = `You selected: ${path}`
+ipc.on('selected-file', function (event, path) {
     parseXml(path)
 })
 
@@ -32,21 +31,32 @@ function capitalizeFirstLetter(string) {
 }
 
 function parseXml(path) {
+    document.getElementById('selected-file').innerHTML = `You selected: ${path}`
     var data = fs.readFileSync(path);
     parser = new DOMParser();
     xmlDoc = parser.parseFromString(data.toString(), "text/xml");
     var jsObj = X2J.parseXml(xmlDoc)
-    components = jsObj[0].rte[0].components[0].component
+    let components = jsObj[0].rte[0].components[0].component
+    // components.sort(function(a, b){
+    //     if(a.inputs && !b.inputs) return -1;
+    //     // if(a.jAttr.name > b.jAttr.name) return 1;
+    //     return 0;
+    // })
     elements = []
-    components.forEach(function(element) {
-        elements.push({
-            data: {
-                id: element.jAttr.name,
-                label: capitalizeFirstLetter(element.jAttr.name).replace(/_/g, ' '),
-                'source-label': 'wfoihw',
-                type: 'type2'
-            },
-        })
+    components.forEach(function (element) {
+        let col = 0
+        if (element.outputs) {
+            ++col
+        }
+        if (element.inputs) {
+            ++col
+        }
+        element.label = capitalizeFirstLetter(element.jAttr.name).replace(/_/g, ' ')
+        // element.row = 2,
+        element.col = col,
+            elements.push({
+                data: element
+            })
     })
 
     var cy = cytoscape({
@@ -56,7 +66,6 @@ function parseXml(path) {
         zoomingEnabled: false,
         panningEnabled: false,
         autoungrabify: true,
-        "active-bg-size": 200,
         style: [{
             selector: 'core',
             css: {
@@ -71,11 +80,9 @@ function parseXml(path) {
                 'line-color': '#ff0000',
                 'line-style': 'solid',
                 'overlay-color': '#00ff00',
-                //'overlay-padding': '100px',
-                'overlay-opacity': 100
             }
         }, {
-             selector: ':selected',
+            selector: ':selected',
             css: {
                 'background-color': 'red'
             }
@@ -83,18 +90,16 @@ function parseXml(path) {
             selector: 'node',
             style: {
                 shape: 'roundrectangle',
-//                                 'background-color': '#505050',
+                //                                 'background-color': '#505050',
                 'active-bg-color': 'white',
                 content: 'data(label)',
                 'text-wrap': 'wrap',
                 'text-max-width': 100,
                 'text-valign': 'center',
-                //         'text-halign': 'center',
-                //         'text-transform': 'uppercase',
                 color: 'white',
                 width: 'label',
                 height: 'label',
-                padding: '10px'
+                padding: '10px',
             }
         }, {
             selector: 'edge',
@@ -133,8 +138,11 @@ function parseXml(path) {
         }],
 
         layout: {
-            name: 'circle',
-            rows: 4
+            name: 'grid',
+            rows: 20,
+            cols: 4,
+            position: function (node) { return { row: node.data('row'), col: node.data('col') }; }
+            // sort: sortera
         },
         elements: elements //                 elements: [{
     });
@@ -147,24 +155,38 @@ function parseXml(path) {
         stackOrder: 1,
         //         handleOutlineWidth: 3,
         handlePosition: 'middle middle',
-        edgeType: function() {
+        edgeType: function () {
             return 'flat';
         },
-        start: function(sourceNode) {
+        start: function (sourceNode) {
             // fired when edgehandles interaction starts (drag on handle)
-            console.log(sourceNode)
+            console.log('\n' + sourceNode._private.data.jAttr.name)
+            if (sourceNode._private.data.inputs) {
+                console.log('Inputs:')
+                for (input of sourceNode._private.data.inputs[0].input) {
+                    console.log('\t[' + input.jAttr.type + '] ' + input.jAttr.name)
+                    console.log()
+                }
+            }
+            if (sourceNode._private.data.outputs) {
+                console.log('Outputs:')
+                for (output of sourceNode._private.data.outputs[0].output) {
+                    console.log('\t[' + output.jAttr.type + '] ' + output.jAttr.name)
+                    console.log()
+                }
+            }
         },
     });
-    cy.on('mouseover', 'node', function(event) {//         console.log(event)
-    //         console.log(this.id())
-    //         cy.nodes('#1').select();
-            event.target.select()
-    //         cy.edgehandles.showhandle
+    cy.on('mouseover', 'node', function (event) {//         console.log(event)
+        //         console.log(this.id())
+        //         cy.nodes('#1').select();
+        event.target.select()
+        //         cy.edgehandles.showhandle
     });
-        cy.on('mouseout', 'node', function(event) {//         console.log(event)
-            event.target.unselect()
+    cy.on('mouseout', 'node', function (event) {//         console.log(event)
+        event.target.unselect()
     });
-    cy.on('cyedgehandles.start', 'node', function(e) {
+    cy.on('cyedgehandles.start', 'node', function (e) {
         var srcNode = this;
         //         console.log('efwf')
         //         srcNode.target.select()
@@ -172,4 +194,4 @@ function parseXml(path) {
     });
 }
 
-parseXml('C:/stash/electron-quick-start/components.xml')
+parseXml(__dirname + '/components.xml')
