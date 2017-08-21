@@ -30,6 +30,22 @@ function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+function findChildren(c, components){
+    for (output of c.outputs[0].output) {
+        for (c2 of components) {
+            if (c2.col || !c2.inputs) {
+                continue
+            }
+            for (input of c2.inputs[0].input) {
+                if (input.jAttr.type == output.jAttr.type) {
+                    c2.col = c.col + 1
+                    findChildren(c2, components)
+                }
+            }
+        }
+    }
+}
+
 function parseXml(path) {
     document.getElementById('selected-file').innerHTML = `You selected: ${path}`
     var data = fs.readFileSync(path);
@@ -42,21 +58,37 @@ function parseXml(path) {
     //     // if(a.jAttr.name > b.jAttr.name) return 1;
     //     return 0;
     // })
+    for (c of components) {
+        if (!c.inputs && !c.outputs){
+            c.col = 0
+        }
+
+        if (!c.inputs) {
+            if (c.outputs) {
+                c.col = 1
+                findChildren(c, components)
+            }
+        }
+    }
     elements = []
     components.forEach(function (element) {
-        let col = 0
-        if (element.outputs) {
-            ++col
-        }
-        if (element.inputs) {
-            ++col
-        }
+        // let col = 0
+        // if (element.outputs) {
+        //     ++col
+        // }
+        // if (element.inputs) {
+        //     for (input of sourceNode._private.data.inputs[0].input) {
+        //         console.log('\t[' + input.jAttr.type + '] ' + input.jAttr.name)
+        //         console.log()
+        //     }
+        //     ++col
+        // }
         element.label = capitalizeFirstLetter(element.jAttr.name).replace(/_/g, ' ')
         // element.row = 2,
-        element.col = col,
-            elements.push({
-                data: element
-            })
+        // element.col = col,
+        elements.push({
+            data: element
+        })
     })
 
     var cy = cytoscape({
@@ -140,7 +172,7 @@ function parseXml(path) {
         layout: {
             name: 'grid',
             rows: 20,
-            cols: 4,
+            cols: 10,
             position: function (node) { return { row: node.data('row'), col: node.data('col') }; }
             // sort: sortera
         },
