@@ -30,62 +30,56 @@ function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-function findChildren(c, components){
-    for (output of c.outputs[0].output) {
-        for (c2 of components) {
+function findChildren(outputs, components, col) {
+    let newTypes = []
+    for (let output of outputs) {
+        console.log(c.jAttr.name + ' [' + output.jAttr.type + '] -> ')
+        for (let c2 of components) {
             if (c2.col || !c2.inputs) {
                 continue
             }
-            for (input of c2.inputs[0].input) {
+            for (let input of c2.inputs[0].input) {
                 if (input.jAttr.type == output.jAttr.type) {
-                    c2.col = c.col + 1
-                    findChildren(c2, components)
+                    console.log('\t' + c2.jAttr.name /*+ input.jAttr.type*/)
+                    c2.col = col + 1
+                    if (c2.outputs) {
+                        for (o of c2.outputs[0].output) {
+                            newTypes.push(o)
+                        }
+                    }
                 }
             }
         }
+        // findChildren(c2, components)
+    }
+    if (newTypes.length) {
+        findChildren(newTypes, components, col + 1)
     }
 }
 
 function parseXml(path) {
     document.getElementById('selected-file').innerHTML = `You selected: ${path}`
-    var data = fs.readFileSync(path);
-    parser = new DOMParser();
-    xmlDoc = parser.parseFromString(data.toString(), "text/xml");
-    var jsObj = X2J.parseXml(xmlDoc)
+    let data = fs.readFileSync(path);
+    let parser = new DOMParser();
+    let xmlDoc = parser.parseFromString(data.toString(), "text/xml");
+    let jsObj = X2J.parseXml(xmlDoc)
     let components = jsObj[0].rte[0].components[0].component
-    // components.sort(function(a, b){
-    //     if(a.inputs && !b.inputs) return -1;
-    //     // if(a.jAttr.name > b.jAttr.name) return 1;
-    //     return 0;
-    // })
+
     for (c of components) {
-        if (!c.inputs && !c.outputs){
+        if (!c.inputs && !c.outputs) {
             c.col = 0
         }
 
         if (!c.inputs) {
             if (c.outputs) {
                 c.col = 1
-                findChildren(c, components)
+                findChildren(c.outputs[0].output, components, c.col)
             }
         }
     }
-    elements = []
+    let elements = []
     components.forEach(function (element) {
-        // let col = 0
-        // if (element.outputs) {
-        //     ++col
-        // }
-        // if (element.inputs) {
-        //     for (input of sourceNode._private.data.inputs[0].input) {
-        //         console.log('\t[' + input.jAttr.type + '] ' + input.jAttr.name)
-        //         console.log()
-        //     }
-        //     ++col
-        // }
         element.label = capitalizeFirstLetter(element.jAttr.name).replace(/_/g, ' ')
-        // element.row = 2,
-        // element.col = col,
         elements.push({
             data: element
         })
@@ -94,7 +88,7 @@ function parseXml(path) {
     var cy = cytoscape({
         container: document.getElementById('cy'),
         boxSelectionEnabled: false,
-        //         autounselectify: true,
+        autounselectify: true,
         zoomingEnabled: false,
         panningEnabled: false,
         autoungrabify: true,
@@ -190,24 +184,25 @@ function parseXml(path) {
         edgeType: function () {
             return 'flat';
         },
-        start: function (sourceNode) {
-            // fired when edgehandles interaction starts (drag on handle)
-            console.log('\n' + sourceNode._private.data.jAttr.name)
-            if (sourceNode._private.data.inputs) {
-                console.log('Inputs:')
-                for (input of sourceNode._private.data.inputs[0].input) {
-                    console.log('\t[' + input.jAttr.type + '] ' + input.jAttr.name)
-                    console.log()
-                }
-            }
-            if (sourceNode._private.data.outputs) {
-                console.log('Outputs:')
-                for (output of sourceNode._private.data.outputs[0].output) {
-                    console.log('\t[' + output.jAttr.type + '] ' + output.jAttr.name)
-                    console.log()
-                }
-            }
-        },
+        // start: function (sourceNode) {
+        //     // fired when edgehandles interaction starts (drag on handle)
+
+        //     console.log('\n' + sourceNode._private.data.jAttr.name)
+        //     if (sourceNode._private.data.inputs) {
+        //         console.log('Inputs:')
+        //         for (input of sourceNode._private.data.inputs[0].input) {
+        //             console.log('\t[' + input.jAttr.type + '] ' + input.jAttr.name)
+        //             console.log()
+        //         }
+        //     }
+        //     if (sourceNode._private.data.outputs) {
+        //         console.log('Outputs:')
+        //         for (output of sourceNode._private.data.outputs[0].output) {
+        //             console.log('\t[' + output.jAttr.type + '] ' + output.jAttr.name)
+        //             console.log()
+        //         }
+        //     }
+        // },
     });
     cy.on('mouseover', 'node', function (event) {//         console.log(event)
         //         console.log(this.id())
@@ -220,7 +215,8 @@ function parseXml(path) {
     });
     cy.on('cyedgehandles.start', 'node', function (e) {
         var srcNode = this;
-        //         console.log('efwf')
+        let nodes = cy.nodes("[label='Scanner']")
+                console.log(nodes)
         //         srcNode.target.select()
         // ...
     });
