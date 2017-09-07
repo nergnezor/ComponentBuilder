@@ -78,10 +78,10 @@ function parseXml(path) {
         }
     }
     let elements = []
-    components.forEach(function (element) {
-        element.label = capitalizeFirstLetter(element.jAttr.name).replace(/_/g, ' ')
+    components.forEach(function (component) {
+        component.label = capitalizeFirstLetter(component.jAttr.name).replace(/_/g, ' ')
         elements.push({
-            data: element
+            data: component
         })
     })
 
@@ -116,8 +116,7 @@ function parseXml(path) {
             selector: 'node',
             style: {
                 shape: 'roundrectangle',
-                //                                 'background-color': '#505050',
-                'active-bg-color': 'white',
+                'background-color': '#505050',
                 content: 'data(label)',
                 'text-wrap': 'wrap',
                 'text-max-width': 100,
@@ -146,7 +145,7 @@ function parseXml(path) {
             selector: '.edgehandles-source',
             css: {
                 'border-width': 2,
-                'border-color': 'red'
+                'border-color': 'yellow'
             }
         }, {
             selector: '.edgehandles-target',
@@ -184,25 +183,28 @@ function parseXml(path) {
         edgeType: function () {
             return 'flat';
         },
-        // start: function (sourceNode) {
-        //     // fired when edgehandles interaction starts (drag on handle)
-
-        //     console.log('\n' + sourceNode._private.data.jAttr.name)
-        //     if (sourceNode._private.data.inputs) {
-        //         console.log('Inputs:')
-        //         for (input of sourceNode._private.data.inputs[0].input) {
-        //             console.log('\t[' + input.jAttr.type + '] ' + input.jAttr.name)
-        //             console.log()
-        //         }
-        //     }
-        //     if (sourceNode._private.data.outputs) {
-        //         console.log('Outputs:')
-        //         for (output of sourceNode._private.data.outputs[0].output) {
-        //             console.log('\t[' + output.jAttr.type + '] ' + output.jAttr.name)
-        //             console.log()
-        //         }
-        //     }
-        // },
+        start: function (sourceNode) {
+            // fired when edgehandles interaction starts (drag on handle)
+            cy.nodes("[label='Scanner']").style('color', 'grey')
+            cy.nodes("[label='Scanner']").style('events', 'no')
+            cy.nodes("[label='Scanner']").style('border-width', 2)
+            cy.nodes("[label='Scanner']").style('border-color', 'green')
+            console.log('\n' + sourceNode._private.data.jAttr.name)
+            if (sourceNode._private.data.inputs) {
+                console.log('Inputs:')
+                for (input of sourceNode._private.data.inputs[0].input) {
+                    console.log('\t[' + input.jAttr.type + '] ' + input.jAttr.name)
+                    console.log()
+                }
+            }
+            if (sourceNode._private.data.outputs) {
+                console.log('Outputs:')
+                for (output of sourceNode._private.data.outputs[0].output) {
+                    console.log('\t[' + output.jAttr.type + '] ' + output.jAttr.name)
+                    console.log()
+                }
+            }
+        },
     });
     cy.on('mouseover', 'node', function (event) {//         console.log(event)
         //         console.log(this.id())
@@ -215,10 +217,22 @@ function parseXml(path) {
     });
     cy.on('cyedgehandles.start', 'node', function (e) {
         var srcNode = this;
-        let nodes = cy.nodes("[label='Scanner']")
-                console.log(nodes)
-        //         srcNode.target.select()
-        // ...
+        // cy.nodes("[label='Scanner']").hide()
+        // cy.nodes("[label='Scanner']").style('color', 'grey')
+        // cy.nodes("[label='Scanner']").style('events', 'no')
+        // cy.nodes("[label='Scanner']").style('border-width', 2)
+        // cy.nodes("[label='Scanner']").style('border-color', 'green')
+
+    });
+    cy.on('cyedgehandles.stop', 'node', function (e) {
+        var srcNode = this;
+        // cy.nodes("[label='Scanner']").show()
+    });
+    cy.on('cyedgehandles.addpreview', 'node', function (e) {
+        if (this._private.data.jAttr.name == 'scanner') {
+        }
+
+        // cy.nodes("[label='Scanner']").show()
     });
 }
 
