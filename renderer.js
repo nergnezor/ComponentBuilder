@@ -2,22 +2,12 @@
 const ipc = require('electron').ipcRenderer
 const fs = require("fs");
 
-const x2j = require('./js/xml2json')
-const vis = require('./js/vis.min')
+require('./js/xml2json')
 const cytoscape = require('cytoscape')
 var edgehandles = require('cytoscape-edgehandles');
 
 edgehandles(cytoscape);
-// register extension
-// var jquery = require('./js/jquery-3.2.1.min')
-// const csee = require('./js/CytoscapeEdgeEditation')
-// import CytoscapeEdgeEditation from './js/CytoscapeEdgeEditation'
-
-// cytoscape.use( require('./js/CytoscapeEdgeEditation') );
-// cytoscape.use('CytoscapeEdgeEditation');
-
 const selectDirBtn = document.getElementById('select-file')
-
 selectDirBtn.addEventListener('click', function (event) {
     ipc.send('open-file-dialog')
 })
@@ -32,6 +22,7 @@ function capitalizeFirstLetter(string) {
 
 function findChildren(outputs, components, col) {
     let newTypes = []
+    let nRows = 0
     for (let output of outputs) {
         console.log(c.jAttr.name + ' [' + output.jAttr.type + '] -> ')
         for (let c2 of components) {
@@ -42,28 +33,37 @@ function findChildren(outputs, components, col) {
                 if (input.jAttr.type == output.jAttr.type) {
                     console.log('\t' + c2.jAttr.name /*+ input.jAttr.type*/)
                     c2.col = col + 1
+                    ++nRows
                     if (c2.outputs) {
                         for (o of c2.outputs[0].output) {
                             newTypes.push(o)
                         }
                     }
+                    break
                 }
             }
         }
         // findChildren(c2, components)
     }
     if (newTypes.length) {
-        findChildren(newTypes, components, col + 1)
+        l = findChildren(newTypes, components, col + 1)
+        if (l > nRows) nRows = l
     }
+    // console.log(l)
+    return nRows
 }
 
+let nCols = 0
+let nRows = 0
+
+
 function parseXml(path) {
-    document.getElementById('selected-file').innerHTML = `You selected: ${path}`
     let data = fs.readFileSync(path);
     let parser = new DOMParser();
     let xmlDoc = parser.parseFromString(data.toString(), "text/xml");
     let jsObj = X2J.parseXml(xmlDoc)
     let components = jsObj[0].rte[0].components[0].component
+    console.log(nCols)
 
     for (c of components) {
         if (!c.inputs && !c.outputs) {
@@ -73,9 +73,10 @@ function parseXml(path) {
         if (!c.inputs) {
             if (c.outputs) {
                 c.col = 1
-                findChildren(c.outputs[0].output, components, c.col)
+                nRows = (findChildren(c.outputs[0].output, components, c.col))
             }
         }
+        if (c.col + 1 > nCols) nCols = c.col + 1
     }
     let elements = []
     components.forEach(function (component) {
@@ -89,8 +90,10 @@ function parseXml(path) {
         container: document.getElementById('cy'),
         boxSelectionEnabled: false,
         autounselectify: true,
-        zoomingEnabled: false,
-        panningEnabled: false,
+        userZoomingEnabled: false,
+        userPanningEnabled: false,
+        // zoomingEnabled: false,
+        // panningEnabled: false,
         autoungrabify: true,
         style: [{
             selector: 'core',
@@ -125,6 +128,7 @@ function parseXml(path) {
                 width: 'label',
                 height: 'label',
                 padding: '10px',
+                // 'font-size': '5'
             }
         }, {
             selector: 'edge',
@@ -164,14 +168,19 @@ function parseXml(path) {
 
         layout: {
             name: 'grid',
-            rows: 20,
-            cols: 10,
+            rows: nRows,
+            cols: nCols,
+            // minZoom: 0.5,
+            // maxZoom: 1.0,
+            // fit: false,
+            // condense: true,
+            // padding: 300,
             position: function (node) { return { row: node.data('row'), col: node.data('col') }; }
-            // sort: sortera
         },
-        elements: elements //                 elements: [{
+        elements: elements,
     });
-
+    // cy.userZoomingEnabled(false)
+    // cy.userPanningEnabled(false)
     cy.edgehandles({
         toggleOffOnLeave: true,
         //         handleNodes: "node",
@@ -185,55 +194,55 @@ function parseXml(path) {
         },
         start: function (sourceNode) {
             // fired when edgehandles interaction starts (drag on handle)
-            cy.nodes("[label='Scanner']").style('color', 'grey')
-            cy.nodes("[label='Scanner']").style('events', 'no')
-            cy.nodes("[label='Scanner']").style('border-width', 2)
-            cy.nodes("[label='Scanner']").style('border-color', 'green')
-            console.log('\n' + sourceNode._private.data.jAttr.name)
-            if (sourceNode._private.data.inputs) {
-                console.log('Inputs:')
-                for (input of sourceNode._private.data.inputs[0].input) {
-                    console.log('\t[' + input.jAttr.type + '] ' + input.jAttr.name)
-                    console.log()
-                }
-            }
-            if (sourceNode._private.data.outputs) {
-                console.log('Outputs:')
-                for (output of sourceNode._private.data.outputs[0].output) {
-                    console.log('\t[' + output.jAttr.type + '] ' + output.jAttr.name)
-                    console.log()
-                }
-            }
+            // cy.nodes("[label='Scanner']").style('color', 'grey')
+            // let connectable = cy.elements(`node[col = ${sourceNode._private.data.col + 1}]`)
+            let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
+            connectable.style({'color': 'blue', 'border-width': 2, 'border-color': 'green'})
+            console.log('\n' + sourceNode._private.data.jAttr.name, sourceNode._private.data.col)
+            // if (sourceNode._private.data.inputs) {
+            //     console.log('Inputs:')
+            //     for (input of sourceNode._private.data.inputs[0].input) {
+            //         console.log('\t[' + input.jAttr.type + '] ' + input.jAttr.name)
+            //         console.log()
+            //     }
+            // }
+            // if (sourceNode._private.data.outputs) {
+            //     console.log('Outputs:')
+            //     for (output of sourceNode._private.data.outputs[0].output) {
+            //         console.log('\t[' + output.jAttr.type + '] ' + output.jAttr.name)
+            //         console.log()
+            //     }
+            // }
         },
     });
     cy.on('mouseover', 'node', function (event) {//         console.log(event)
-        //         console.log(this.id())
-        //         cy.nodes('#1').select();
-        event.target.select()
-        //         cy.edgehandles.showhandle
+        // console.log(this.id())
+        this.style('background-color', '#3050a0')
     });
     cy.on('mouseout', 'node', function (event) {//         console.log(event)
-        event.target.unselect()
+        this.style('background-color', '#505050')
     });
     cy.on('cyedgehandles.start', 'node', function (e) {
         var srcNode = this;
-        // cy.nodes("[label='Scanner']").hide()
-        // cy.nodes("[label='Scanner']").style('color', 'grey')
-        // cy.nodes("[label='Scanner']").style('events', 'no')
-        // cy.nodes("[label='Scanner']").style('border-width', 2)
-        // cy.nodes("[label='Scanner']").style('border-color', 'green')
 
     });
     cy.on('cyedgehandles.stop', 'node', function (e) {
         var srcNode = this;
         // cy.nodes("[label='Scanner']").show()
     });
-    cy.on('cyedgehandles.addpreview', 'node', function (e) {
-        if (this._private.data.jAttr.name == 'scanner') {
-        }
 
-        // cy.nodes("[label='Scanner']").show()
+    var layout = cy.nodes().layout({
+        name: 'grid',
+        rows: nRows,
+        cols: nCols,
+        position: function (node) { return { row: node.data('row'), col: node.data('col') }; }
+      });
+    cy.on('resize', function () {
+        console.log('cy resized');
+        // cy.fit(cy.nodes())
+          layout.run()
     });
+
 }
 
 parseXml(__dirname + '/components.xml')

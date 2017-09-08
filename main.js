@@ -88,16 +88,11 @@ app.on('ready', function() {
         protocol: 'file:',
         slashes: true
     }))
-
     // win.webContents.openDevTools()
     // Let us register listeners on the window, so we can update the state
     // automatically (the listeners will be removed when the window is closed)
     // and restore the maximized or full screen state
     mainWindowState.manage(win)
-    win.once('did-finish-load', ()=>{
-        // Send Message
-        win.webContents.send('selected-file', 'C:\stash\electron-quick-start\components.xml');
-    })
 })
 
 // In this file you can include the rest of your app's specific main process
