@@ -140,8 +140,8 @@ function parseXml(path) {
                 'target-arrow-color': '#ccc',
                 'target-arrow-shape': 'triangle',
                 'curve-style': 'unbundled-bezier',
-                'control-point-distances': [0, 50],
-                'control-point-weights': [0.1, 0.9],
+                'control-point-distances': [10, 50],
+                'control-point-weights': [0.1, 0.7],
                 // 'curve-style': 'segments',
                 // 'segment-distances': '100 20',
                 'text-rotation': 'autorotate',
@@ -208,32 +208,62 @@ function parseXml(path) {
         handleColor: 'rgba(32, 45, 21, 0)',
         handlePosition: 'middle middle',
         start: function (sourceNode) {
-            let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
-            cy.nodes().style('events', 'no')
+            // let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
+            // cy.nodes().style('events', 'no')
             // connectable.animate({
-            //     style: { 'background-color': 'green'}
-            // })
-            connectable.style({ 'events': 'yes' })
-        },
-        stop: function (sourceNode) {
-            let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
-            connectable.style({ 'background-color': '#505050', 'border-width': 0 })
-            cy.nodes().style('events', 'yes')
-        },
-        complete: function (sourceNode, targetNodes, addedEntities) {
+                //     style: { 'background-color': 'green'}
+                // })
+                // connectable.style({ 'events': 'yes' })
+            },
+            stop: function (sourceNode) {
+                cy.nodes().style({'events': 'yes', 'background-color': '#505050'})
+                // let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
+                // connectable.style({ 'background-color': '#505050', 'border-width': 0 })
+            },
+            complete: function (sourceNode, targetNodes, addedEntities) {
+                cy.nodes().style({'events': 'yes', 'background-color': '#505050'})
             // addedEntities[0].style({'source-label': edgeLabels['source'], 'target-label': edgeLabels['target']})
         },
     });
-
+    
     cy.on('mouseover', 'node', function (event) {//         console.log(event)
         // console.log(this.id())
-        this.style('background-color', '#3050a0')
+        // this.style('background-color', '#3050a0')
     });
     cy.on('mouseout', 'node', function (event) {//         console.log(event)
-        this.style('background-color', '#505050')
+        // this.style('background-color', '#505050')
     });
     cy.on('cyedgehandles.start', 'node', function (e) {
         source = this
+        function getAllConnections(source) {
+            let targets = {}
+            for (let output of source._private.data.outputs[0].output) {
+                for (let target of elements) {
+                    if (target.data.inputs) {
+                        for (let input of target.data.inputs[0].input) {
+                            if (output.jAttr.type == input.jAttr.type) {
+                                let name = target.data.label
+                                if (name in targets) {
+                                    targets[name]['source'].push(output.jAttr.name)
+                                }
+                                else {
+                                    targets[name] = { 'source': [output.jAttr.name], 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name }
+                                }
+                                let connectable = cy.nodes(`node[label = '${name}']`)
+                                connectable.animate({
+                                    style: { 'background-color': 'blue'}
+                                })
+                                connectable.style('events', 'yes')
+                            }
+                        }
+                    }
+                }
+            }
+            return targets
+        }
+        cy.nodes().style('events', 'no')
+        edgeLabels = getAllConnections(source);
+        // console.log(edgeLabels);
     });
     cy.on('cyedgehandles.addpreview', 'node', function (e) {
         target = this
@@ -242,21 +272,6 @@ function parseXml(path) {
         }).update()
 
 
-        function getAllConnections(source) {
-            targets = []
-            for (output of source._private.data.outputs[0].output) {
-                for (target of elements) {
-                    if (target.data.inputs) {
-                        for (input of target.data.inputs[0].input) {
-                            if (output.jAttr.type == input.jAttr.type) {
-                                targets.push({ 'name': target.data.label, 'source': output.jAttr.name, 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name })
-                            }
-                        }
-                    }
-                }
-            }
-            return targets
-        }
         function getConnections(source, target) {
             targets = []
             for (output of source._private.data.outputs[0].output) {
@@ -270,8 +285,6 @@ function parseXml(path) {
         }
 
         edgeLabels = getConnections(source, target);
-        edgeLabels = getAllConnections(source);
-        console.log(edgeLabels);
         // cy.style().selector('.edgehandles-preview').style('label', edgeLabels['type']).update()
         // edgeLabels['label'] = ''
     });
