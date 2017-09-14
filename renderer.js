@@ -24,14 +24,15 @@ function findChildren(outputs, components, col) {
     let newTypes = []
     let nRows = 0
     for (let output of outputs) {
-        console.log(c.jAttr.name + ' [' + output.jAttr.type + '] -> ')
+        // console.log(c.jAttr.name + ' [' + output.jAttr.type + '] -> ')
         for (let c2 of components) {
             if (c2.col || !c2.inputs) {
                 continue
             }
             for (let input of c2.inputs[0].input) {
                 if (input.jAttr.type == output.jAttr.type) {
-                    console.log('\t' + c2.jAttr.name /*+ input.jAttr.type*/)
+
+                    // console.log('\t' + c2.jAttr.name /*+ input.jAttr.type*/)
                     c2.col = col + 1
                     ++nRows
                     if (c2.outputs) {
@@ -63,7 +64,6 @@ function parseXml(path) {
     let xmlDoc = parser.parseFromString(data.toString(), "text/xml");
     let jsObj = X2J.parseXml(xmlDoc)
     let components = jsObj[0].rte[0].components[0].component
-    console.log(nCols)
 
     for (c of components) {
         if (!c.inputs && !c.outputs) {
@@ -78,44 +78,43 @@ function parseXml(path) {
         }
         if (c.col + 1 > nCols) nCols = c.col + 1
     }
+
     let elements = []
     components.forEach(function (component) {
         component.label = capitalizeFirstLetter(component.jAttr.name).replace(/_/g, ' ')
         elements.push({
-            data: component
+            data: component,
         })
     })
-
+    console.log(elements)
     var cy = cytoscape({
         container: document.getElementById('cy'),
         boxSelectionEnabled: false,
-        autounselectify: true,
+        // autounselectify: true,
         userZoomingEnabled: false,
         userPanningEnabled: false,
-        // zoomingEnabled: false,
-        // panningEnabled: false,
         autoungrabify: true,
         style: [{
-            selector: 'core',
-            css: {
-                'active-bg-color': 'red',
-                'selection-box-color': 'red',
-                'selection-box-border-color': 'red',
-                'overlay-color': 'red'
-            }
-        }, {
-            selector: ':active',
-            css: {
-                'line-color': '#ff0000',
-                'line-style': 'solid',
-                'overlay-color': '#00ff00',
-            }
-        }, {
-            selector: ':selected',
-            css: {
-                'background-color': 'red'
-            }
-        }, {
+            //     selector: 'core',
+            //     css: {
+            //         'active-bg-color': 'red',
+            //         'selection-box-color': 'red',
+            //         'selection-box-border-color': 'red',
+            //         'overlay-color': 'red'
+            //     }
+            // }, {
+            //     selector: ':active',
+            //     css: {
+            //         'line-color': '#ff0000',
+            //         'line-style': 'solid',
+            //         'overlay-color': '#00ff00',
+            //     }
+            // }, {
+            //     selector: ':selected',
+            //     css: {
+            //         'background-color': 'red'
+            //     }
+            // }, {
             selector: 'node',
             style: {
                 shape: 'roundrectangle',
@@ -133,88 +132,99 @@ function parseXml(path) {
         }, {
             selector: 'edge',
             style: {
+                color: 'white',
+                'text-outline-color': 'black',
+                'text-outline-width': 1,
                 'width': 2,
-                'line-color': '#ccc',
+                'line-style': 'solid',
                 'target-arrow-color': '#ccc',
                 'target-arrow-shape': 'triangle',
                 'curve-style': 'unbundled-bezier',
-                'source-label': 'hej'
+                'control-point-distances': [0, 50],
+                'control-point-weights': [0.1, 0.9],
+                // 'curve-style': 'segments',
+                // 'segment-distances': '100 20',
+                'text-rotation': 'autorotate',
+                // 'label': 'test',
+                // 'source-label': 'data(label)',
+                // 'target-label': 'target',
+                'source-text-offset': 50,
+                'target-text-offset': 50
             }
         }, {
-            selector: '.edgehandles-hover',
+            selector: 'edge.unbundled-bezier',
             css: {
-                'background-color': 'purple'
+                'curve-style': 'unbundled-bezier'
             }
+            // }, {
+            //     selector: '.edgehandles-hover',
+            //     css: {
+            //         'background-color': 'purple'
+            //     }
+            // }, {
+            //     selector: '.edgehandles-source',
+            //     css: {
+            //         'border-width': 2,
+            //         'border-color': 'yellow'
+            //     }
+            // }, {
+            //     selector: '.edgehandles-target',
+            //     css: {
+            //         'border-width': 2,
+            //         'border-color': 'cyan'
+            //     }
+            // }, {
+            //     selector: '.edgehandles-presumptive-target',
+            //     css: {
+            //         'line-color': 'blue',
+            //         // 'target-arrow-color': 'blue',
+            //         // 'source-arrow-color': 'green'
+            //     }
         }, {
-            selector: '.edgehandles-source',
+            selector: '.edgehandles-ghost-edge',
             css: {
-                'border-width': 2,
-                'border-color': 'yellow'
+                'line-style': 'dotted',
             }
-        }, {
-            selector: '.edgehandles-target',
-            css: {
-                'border-width': 2,
-                'border-color': 'cyan'
-            }
-        }, {
-            selector: '.edgehandles-preview, .edgehandles-ghost-edge',
-            css: {
-                'line-color': 'yellow',
-                'target-arrow-color': 'blue',
-                'source-arrow-color': 'green'
-            }
+            // }, {
+            //     selector: '.edgehandles-preview',
+            //     css: {
+            //     }
         }],
 
         layout: {
             name: 'grid',
             rows: nRows,
             cols: nCols,
-            // minZoom: 0.5,
-            // maxZoom: 1.0,
-            // fit: false,
-            // condense: true,
-            // padding: 300,
             position: function (node) { return { row: node.data('row'), col: node.data('col') }; }
         },
         elements: elements,
     });
-    // cy.userZoomingEnabled(false)
-    // cy.userPanningEnabled(false)
+
     cy.edgehandles({
         toggleOffOnLeave: true,
-        //         handleNodes: "node",
+        stackOrder: 1,
+        hoverDelay: 0,
         handleSize: 300,
         handleColor: 'rgba(32, 45, 21, 0)',
-        stackOrder: 1,
-        //         handleOutlineWidth: 3,
         handlePosition: 'middle middle',
-        edgeType: function () {
-            return 'flat';
-        },
         start: function (sourceNode) {
-            // fired when edgehandles interaction starts (drag on handle)
-            // cy.nodes("[label='Scanner']").style('color', 'grey')
-            // let connectable = cy.elements(`node[col = ${sourceNode._private.data.col + 1}]`)
             let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
-            connectable.style({'color': 'blue', 'border-width': 2, 'border-color': 'green'})
-            console.log('\n' + sourceNode._private.data.jAttr.name, sourceNode._private.data.col)
-            // if (sourceNode._private.data.inputs) {
-            //     console.log('Inputs:')
-            //     for (input of sourceNode._private.data.inputs[0].input) {
-            //         console.log('\t[' + input.jAttr.type + '] ' + input.jAttr.name)
-            //         console.log()
-            //     }
-            // }
-            // if (sourceNode._private.data.outputs) {
-            //     console.log('Outputs:')
-            //     for (output of sourceNode._private.data.outputs[0].output) {
-            //         console.log('\t[' + output.jAttr.type + '] ' + output.jAttr.name)
-            //         console.log()
-            //     }
-            // }
+            cy.nodes().style('events', 'no')
+            // connectable.animate({
+            //     style: { 'background-color': 'green'}
+            // })
+            connectable.style({ 'events': 'yes' })
+        },
+        stop: function (sourceNode) {
+            let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
+            connectable.style({ 'background-color': '#505050', 'border-width': 0 })
+            cy.nodes().style('events', 'yes')
+        },
+        complete: function (sourceNode, targetNodes, addedEntities) {
+            // addedEntities[0].style({'source-label': edgeLabels['source'], 'target-label': edgeLabels['target']})
         },
     });
+
     cy.on('mouseover', 'node', function (event) {//         console.log(event)
         // console.log(this.id())
         this.style('background-color', '#3050a0')
@@ -223,12 +233,52 @@ function parseXml(path) {
         this.style('background-color', '#505050')
     });
     cy.on('cyedgehandles.start', 'node', function (e) {
-        var srcNode = this;
-
+        source = this
     });
-    cy.on('cyedgehandles.stop', 'node', function (e) {
-        var srcNode = this;
-        // cy.nodes("[label='Scanner']").show()
+    cy.on('cyedgehandles.addpreview', 'node', function (e) {
+        target = this
+        cy.style().selector('.edgehandles-ghost-edge').style({
+            visibility: 'hidden'
+        }).update()
+
+
+        function getAllConnections(source) {
+            targets = []
+            for (output of source._private.data.outputs[0].output) {
+                for (target of elements) {
+                    if (target.data.inputs) {
+                        for (input of target.data.inputs[0].input) {
+                            if (output.jAttr.type == input.jAttr.type) {
+                                targets.push({ 'name': target.data.label, 'source': output.jAttr.name, 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name })
+                            }
+                        }
+                    }
+                }
+            }
+            return targets
+        }
+        function getConnections(source, target) {
+            targets = []
+            for (output of source._private.data.outputs[0].output) {
+                for (input of target._private.data.inputs[0].input) {
+                    if (output.jAttr.type == input.jAttr.type) {
+                        targets.push({ 'source': output.jAttr.name, 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name })
+                    }
+                }
+            }
+            return targets
+        }
+
+        edgeLabels = getConnections(source, target);
+        edgeLabels = getAllConnections(source);
+        console.log(edgeLabels);
+        // cy.style().selector('.edgehandles-preview').style('label', edgeLabels['type']).update()
+        // edgeLabels['label'] = ''
+    });
+    cy.on('cyedgehandles.removepreview', 'node', function (e) {
+        cy.style().selector('.edgehandles-ghost-edge').style({
+            visibility: 'visible'
+        }).update()
     });
 
     var layout = cy.nodes().layout({
@@ -236,13 +286,10 @@ function parseXml(path) {
         rows: nRows,
         cols: nCols,
         position: function (node) { return { row: node.data('row'), col: node.data('col') }; }
-      });
-    cy.on('resize', function () {
-        console.log('cy resized');
-        // cy.fit(cy.nodes())
-          layout.run()
     });
-
+    cy.on('resize', function () {
+        layout.run()
+    });
 }
 
 parseXml(__dirname + '/components.xml')
