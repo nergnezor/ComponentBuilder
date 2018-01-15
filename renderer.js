@@ -144,41 +144,43 @@ function parseXml(path) {
                 'control-point-weights': [0.1, 0.7],
                 // 'curve-style': 'segments',
                 // 'segment-distances': '100 20',
-                'text-rotation': 'autorotate',
-                // 'label': 'test',
+                // 'text-rotation': 'autorotate',
+                // 'label': 'data(label)',
                 // 'source-label': 'data(label)',
                 // 'target-label': 'target',
-                'source-text-offset': 50,
-                'target-text-offset': 50
+                // 'source-text-offset': 50,
+                // 'target-text-offset': 50
             }
         }, {
             selector: 'edge.unbundled-bezier',
             css: {
                 'curve-style': 'unbundled-bezier'
             }
-            // }, {
-            //     selector: '.edgehandles-hover',
-            //     css: {
-            //         'background-color': 'purple'
-            //     }
-            // }, {
-            //     selector: '.edgehandles-source',
-            //     css: {
-            //         'border-width': 2,
-            //         'border-color': 'yellow'
-            //     }
-            // }, {
-            //     selector: '.edgehandles-target',
-            //     css: {
-            //         'border-width': 2,
-            //         'border-color': 'cyan'
-            //     }
+        }, {
+            selector: '.edgehandles-hover',
+            css: {
+                'background-color': 'purple',
+                'border-width': 2,
+                'border-color': 'yellow'
+            }
+        // }, {
+        //     selector: '.edgehandles-source',
+        //     css: {
+        //         'border-width': 2,
+        //         'border-color': 'yellow'
+        //     }
+        // }, {
+        //     selector: '.edgehandles-target',
+        //     css: {
+        //         'border-width': 2,
+        //         'border-color': 'cyan'
+        //     }
             // }, {
             //     selector: '.edgehandles-presumptive-target',
             //     css: {
             //         'line-color': 'blue',
-            //         // 'target-arrow-color': 'blue',
-            //         // 'source-arrow-color': 'green'
+            //         'target-arrow-color': 'blue',
+            //         'source-arrow-color': 'green'
             //     }
         }, {
             selector: '.edgehandles-ghost-edge',
@@ -205,36 +207,48 @@ function parseXml(path) {
         stackOrder: 1,
         hoverDelay: 0,
         handleSize: 300,
-        handleColor: 'rgba(32, 45, 21, 0)',
+        handleColor: 'rgba(32, 45, 255, 0)',
         handlePosition: 'middle middle',
         start: function (sourceNode) {
             // let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
             // cy.nodes().style('events', 'no')
             // connectable.animate({
-                //     style: { 'background-color': 'green'}
-                // })
-                // connectable.style({ 'events': 'yes' })
-            },
-            stop: function (sourceNode) {
-                cy.nodes().style({'events': 'yes', 'background-color': '#505050'})
-                // let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
-                // connectable.style({ 'background-color': '#505050', 'border-width': 0 })
-            },
-            complete: function (sourceNode, targetNodes, addedEntities) {
-                cy.nodes().style({'events': 'yes', 'background-color': '#505050'})
+            //     style: { 'background-color': 'green'}
+            // })
+            // connectable.style({ 'events': 'yes' })
+        },
+        stop: function (sourceNode) {
+            cy.nodes().style({ 'events': 'yes', 'background-color': '#505050' })
+            // let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
+            // connectable.style({ 'background-color': '#505050', 'border-width': 0 })
+        },
+        complete: function (sourceNode, targetNodes, addedEntities) {
+            cy.nodes().style({ 'events': 'yes', 'background-color': '#505050' })
             // addedEntities[0].style({'source-label': edgeLabels['source'], 'target-label': edgeLabels['target']})
         },
     });
-    
-    cy.on('mouseover', 'node', function (event) {//         console.log(event)
+
+    cy.on('tapdragover', 'node', function (event) {//         console.log(event)
         // console.log(this.id())
-        // this.style('background-color', '#3050a0')
+        this.style('background-color', '#3050a0')
     });
-    cy.on('mouseout', 'node', function (event) {//         console.log(event)
-        // this.style('background-color', '#505050')
+    // cy.on('mouseover', 'node', function (event) {//         console.log(event)
+    //     // console.log(this.id())
+    //     this.style('background-color', '#3050a0')
+    // });
+    cy.on('tapdragout', 'node', function (event) {
+        // console.log(event)
+        // console.log(this);
+        this.style('background-color', '#505050')
     });
+    // cy.on('mouseout', 'node', function (event) {
+    //             console.log(event)
+    //     console.log(this);
+    //     this.style('background-color', '#505050')
+    // });
     cy.on('cyedgehandles.start', 'node', function (e) {
         source = this
+        // this.style('background-color', '#ff0000')
         function getAllConnections(source) {
             let targets = {}
             for (let output of source._private.data.outputs[0].output) {
@@ -247,13 +261,14 @@ function parseXml(path) {
                                     targets[name]['source'].push(output.jAttr.name)
                                 }
                                 else {
-                                    targets[name] = { 'source': [output.jAttr.name], 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name }
+                                    targets[name] = { 'source': [output.jAttr.name], 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name, 'id': target.data.id }
+                                    console.log(target.data.id)
                                 }
-                                let connectable = cy.nodes(`node[label = '${name}']`)
-                                connectable.animate({
-                                    style: { 'background-color': 'blue'}
-                                })
-                                connectable.style('events', 'yes')
+                                // let connectable = cy.nodes(`node[label = '${name}']`)
+                                // connectable.animate({
+                                //     style: { 'background-color': 'green' }
+                                // })
+                                // connectable.style('events', 'yes')
                             }
                         }
                     }
@@ -262,8 +277,26 @@ function parseXml(path) {
             return targets
         }
         cy.nodes().style('events', 'no')
-        edgeLabels = getAllConnections(source);
-        // console.log(edgeLabels);
+        targets = getAllConnections(source);
+        // console.log(targets);
+        for (let target in targets) {
+            console.log(targets[target]);
+            // let connectable = cy.nodes(`node[label = '${target}']`)
+            let connectable = cy.getElementById(targets[target]['id'])
+            // console.log(target['id']);
+            // console.log(connectable);
+            
+            // connectable.style('background-color', 'green')
+            connectable.style('events', 'yes')
+            connectable.style('border-width', 2)
+            connectable.style('border-color', 'lime')
+            connectable.style('border-style', 'dotted')
+            //         'border-width': 2,
+        //         'border-color': 'cyan'
+            // connectable.animate({
+            //     style: { 'background-color': 'green' }
+            // })
+        }
     });
     cy.on('cyedgehandles.addpreview', 'node', function (e) {
         target = this
@@ -284,9 +317,11 @@ function parseXml(path) {
             return targets
         }
 
-        edgeLabels = getConnections(source, target);
+        edgeLabels = getConnections(source, target)
+        console.log(edgeLabels)
+        // edgeLabels['label'] = 'euenveviowd'
         // cy.style().selector('.edgehandles-preview').style('label', edgeLabels['type']).update()
-        // edgeLabels['label'] = ''
+        cy.style().selector('.edgehandles-preview').style('label', edgeLabels[0]['type']).update()
     });
     cy.on('cyedgehandles.removepreview', 'node', function (e) {
         cy.style().selector('.edgehandles-ghost-edge').style({
