@@ -54,9 +54,35 @@ function findChildren(outputs, components, col) {
     return nRows
 }
 
+function getConnectableNodes(source, elements) {
+    let targets = {}
+    for (let output of source._private.data.outputs[0].output) {
+        for (let target of elements) {
+            if (target.data.inputs) {
+                for (let input of target.data.inputs[0].input) {
+                    if (output.jAttr.type == input.jAttr.type) {
+                        let name = target.data.label
+                        if (name in targets) {
+                            targets[name]['source'].push(output.jAttr.name)
+                        } else {
+                            targets[name] = { 'source': [output.jAttr.name], 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name, 'id': target.data.id }
+                            console.log(target.data.id)
+                        }
+                        // let connectable = cy.nodes(`node[label = '${name}']`)
+                        // connectable.animate({
+                        //     style: { 'background-color': 'green' }
+                        // })
+                        // connectable.style('events', 'yes')
+                    }
+                }
+            }
+        }
+    }
+    return targets
+}
 let nCols = 0
 let nRows = 0
-
+state = ''
 
 function parseXml(path) {
     let data = fs.readFileSync(path);
@@ -163,18 +189,18 @@ function parseXml(path) {
                 'border-width': 2,
                 'border-color': 'yellow'
             }
-        // }, {
-        //     selector: '.edgehandles-source',
-        //     css: {
-        //         'border-width': 2,
-        //         'border-color': 'yellow'
-        //     }
-        // }, {
-        //     selector: '.edgehandles-target',
-        //     css: {
-        //         'border-width': 2,
-        //         'border-color': 'cyan'
-        //     }
+            // }, {
+            //     selector: '.edgehandles-source',
+            //     css: {
+            //         'border-width': 2,
+            //         'border-color': 'yellow'
+            //     }
+            // }, {
+            //     selector: '.edgehandles-target',
+            //     css: {
+            //         'border-width': 2,
+            //         'border-color': 'cyan'
+            //     }
             // }, {
             //     selector: '.edgehandles-presumptive-target',
             //     css: {
@@ -230,7 +256,17 @@ function parseXml(path) {
 
     cy.on('tapdragover', 'node', function (event) {//         console.log(event)
         // console.log(this.id())
+        if (state == 'started') return
         this.style('background-color', '#3050a0')
+        connectableNodes = getConnectableNodes(this, elements)
+        for (let target in connectableNodes) {
+            console.log(connectableNodes[target])
+            let connectable = cy.getElementById(connectableNodes[target]['id'])
+            connectable.style('events', 'yes')
+            connectable.style('border-width', 2)
+            connectable.style('border-color', 'lime')
+            // connectable.style('border-style', 'double')
+        }
     });
     // cy.on('mouseover', 'node', function (event) {//         console.log(event)
     //     // console.log(this.id())
@@ -240,6 +276,14 @@ function parseXml(path) {
         // console.log(event)
         // console.log(this);
         this.style('background-color', '#505050')
+        if (state == 'started') return
+        // if (state == 'started') {
+        for (let target in connectableNodes) {
+            console.log(connectableNodes[target])
+            let connectable = cy.getElementById(connectableNodes[target]['id'])
+            connectable.style('border-width', 0)
+        }
+        // }
     });
     // cy.on('mouseout', 'node', function (event) {
     //             console.log(event)
@@ -247,59 +291,24 @@ function parseXml(path) {
     //     this.style('background-color', '#505050')
     // });
     cy.on('cyedgehandles.start', 'node', function (e) {
+        state = 'started'
         source = this
-        // this.style('background-color', '#ff0000')
-        function getAllConnections(source) {
-            let targets = {}
-            for (let output of source._private.data.outputs[0].output) {
-                for (let target of elements) {
-                    if (target.data.inputs) {
-                        for (let input of target.data.inputs[0].input) {
-                            if (output.jAttr.type == input.jAttr.type) {
-                                let name = target.data.label
-                                if (name in targets) {
-                                    targets[name]['source'].push(output.jAttr.name)
-                                }
-                                else {
-                                    targets[name] = { 'source': [output.jAttr.name], 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name, 'id': target.data.id }
-                                    console.log(target.data.id)
-                                }
-                                // let connectable = cy.nodes(`node[label = '${name}']`)
-                                // connectable.animate({
-                                //     style: { 'background-color': 'green' }
-                                // })
-                                // connectable.style('events', 'yes')
-                            }
-                        }
-                    }
-                }
-            }
-            return targets
-        }
-        cy.nodes().style('events', 'no')
-        targets = getAllConnections(source);
-        // console.log(targets);
-        for (let target in targets) {
-            console.log(targets[target]);
-            // let connectable = cy.nodes(`node[label = '${target}']`)
-            let connectable = cy.getElementById(targets[target]['id'])
-            // console.log(target['id']);
-            // console.log(connectable);
-            
-            // connectable.style('background-color', 'green')
-            connectable.style('events', 'yes')
-            connectable.style('border-width', 2)
-            connectable.style('border-color', 'lime')
-            connectable.style('border-style', 'dotted')
-            //         'border-width': 2,
-        //         'border-color': 'cyan'
-            // connectable.animate({
-            //     style: { 'background-color': 'green' }
-            // })
-        }
+        // cy.nodes().style('events', 'no')
+        // for (let target in connectableNodes) {
+        //     console.log(connectableNodes[target])
+        //     let connectable = cy.getElementById(connectableNodes[target]['id'])
+        //     connectable.style('events', 'yes')
+        //     connectable.style('border-width', 2)
+        //     connectable.style('border-color', 'blue')
+        //     connectable.style('border-style', 'solid')
+        // }
     });
     cy.on('cyedgehandles.addpreview', 'node', function (e) {
         target = this
+        state = 'preview'
+        lastEvent = e
+        console.log(e);
+
         cy.style().selector('.edgehandles-ghost-edge').style({
             visibility: 'hidden'
         }).update()
@@ -327,6 +336,15 @@ function parseXml(path) {
         cy.style().selector('.edgehandles-ghost-edge').style({
             visibility: 'visible'
         }).update()
+        if (state == 'preview') {
+            for (let target in connectableNodes) {
+                console.log(connectableNodes[target])
+                let connectable = cy.getElementById(connectableNodes[target]['id'])
+                connectable.style('border-width', 0)
+            }
+        }
+        console.log('HEJ');
+
     });
 
     var layout = cy.nodes().layout({
