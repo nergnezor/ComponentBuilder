@@ -54,35 +54,8 @@ function findChildren(outputs, components, col) {
     return nRows
 }
 
-function getConnectableNodes(source, elements) {
-    let targets = {}
-    for (let output of source._private.data.outputs[0].output) {
-        for (let target of elements) {
-            if (target.data.inputs) {
-                for (let input of target.data.inputs[0].input) {
-                    if (output.jAttr.type == input.jAttr.type) {
-                        let name = target.data.label
-                        if (name in targets) {
-                            targets[name]['source'].push(output.jAttr.name)
-                        } else {
-                            targets[name] = { 'source': [output.jAttr.name], 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name, 'id': target.data.id }
-                            console.log(target.data.id)
-                        }
-                        // let connectable = cy.nodes(`node[label = '${name}']`)
-                        // connectable.animate({
-                        //     style: { 'background-color': 'green' }
-                        // })
-                        // connectable.style('events', 'yes')
-                    }
-                }
-            }
-        }
-    }
-    return targets
-}
 let nCols = 0
 let nRows = 0
-state = ''
 
 function parseXml(path) {
     let data = fs.readFileSync(path);
@@ -108,6 +81,7 @@ function parseXml(path) {
     let elements = []
     components.forEach(function (component) {
         component.label = capitalizeFirstLetter(component.jAttr.name).replace(/_/g, ' ')
+        component.compatible = []
         elements.push({
             data: component,
         })
@@ -129,18 +103,20 @@ function parseXml(path) {
             //         'overlay-color': 'red'
             //     }
             // }, {
-            //     selector: ':active',
-            //     css: {
-            //         'line-color': '#ff0000',
-            //         'line-style': 'solid',
-            //         'overlay-color': '#00ff00',
-            //     }
-            // }, {
-            //     selector: ':selected',
-            //     css: {
-            //         'background-color': 'red'
-            //     }
-            // }, {
+            selector: ':active',
+            css: {
+                'overlay-color': '#ff0000',
+                // 'overlay-opacity': 0,
+                'overlay-padding': 0,
+            }
+        }, {
+            selector: ':selected',
+            style: {
+                'overlay-color': 'green',
+                'overlay-opacity': 0,
+                'background-color': '#FF5050',
+            }
+        }, {
             selector: 'node',
             style: {
                 shape: 'roundrectangle',
@@ -228,124 +204,177 @@ function parseXml(path) {
         elements: elements,
     });
 
+    function SetChildren() {
+        let senders = cy.filter('node[outputs]')
+        let receivers = cy.filter('node[inputs]')
+        // console.log(receivers);
+        // receivers.forEach(function (receiver) {
+        //     for (let input of receiver.data('inputs') [0].input) {
+        //         senders.forEach(function (sender) {
+        //             for (let output of sender.data('outputs') [0].output) {
+        //                 if (output.jAttr.type == input.jAttr.type) {
+        //                     sender.data('compatible').push(receiver)
+        //                     return
+        //                 }
+        //             }
+        //         })
+        //     }
+        // })
+        senders.forEach(function (sender) {
+            // if (sender.data('label') != 'Scanner') continue
+            let nodes = receivers.filter(function (ele) {
+                for (let input of ele.data('inputs') [0].input) {
+                    for (let output of sender.data('outputs') [0].output) {
+                        return output.jAttr.type == input.jAttr.type
+                    }
+                }
+            })
+            console.log(sender.data('label'))
+            nodes.forEach(function (ele) {
+                console.log(ele.data('label'));
+            })
+            console.log('');
+        })
+    }
+    function getConnectableNodes(source, elements) {
+        let nodes = cy.filter('node[inputs]')
+        nodes = nodes.filter(function (ele) {
+            for (let input of ele.data('inputs') [0].input) {
+                for (let output of source.data('outputs') [0].output) {
+                    return output.jAttr.type == input.jAttr.type
+                }
+            }
+        })
+        return nodes
+    }
     cy.edgehandles({
-        toggleOffOnLeave: true,
+        // toggleOffOnLeave: true,
         stackOrder: 1,
         hoverDelay: 0,
         handleSize: 300,
         handleColor: 'rgba(32, 45, 255, 0)',
         handlePosition: 'middle middle',
-        start: function (sourceNode) {
-            // let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
-            // cy.nodes().style('events', 'no')
-            // connectable.animate({
-            //     style: { 'background-color': 'green'}
-            // })
-            // connectable.style({ 'events': 'yes' })
-        },
-        stop: function (sourceNode) {
-            cy.nodes().style({ 'events': 'yes', 'background-color': '#505050' })
-            // let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
-            // connectable.style({ 'background-color': '#505050', 'border-width': 0 })
-        },
-        complete: function (sourceNode, targetNodes, addedEntities) {
-            cy.nodes().style({ 'events': 'yes', 'background-color': '#505050' })
-            // addedEntities[0].style({'source-label': edgeLabels['source'], 'target-label': edgeLabels['target']})
-        },
+        // start: function (sourceNode) {
+        //     // let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
+        //     // cy.nodes().style('events', 'no')
+        //     // connectable.animate({
+        //     //     style: { 'background-color': 'green'}
+        //     // })
+        //     // connectable.style({ 'events': 'yes' })
+        // },
+        // stop: function (sourceNode) {
+        //     cy.nodes().style({ 'events': 'yes', 'background-color': '#505050' })
+        //     // let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
+        //     // connectable.style({ 'background-color': '#505050', 'border-width': 0 })
+        // },
+        // complete: function (sourceNode, targetNodes, addedEntities) {
+        //     cy.nodes().style({ 'events': 'yes', 'background-color': '#505050' })
+        //     // addedEntities[0].style({'source-label': edgeLabels['source'], 'target-label': edgeLabels['target']})
+        // },
     });
 
-    cy.on('tapdragover', 'node', function (event) {//         console.log(event)
-        // console.log(this.id())
-        if (state == 'started') return
-        this.style('background-color', '#3050a0')
-        connectableNodes = getConnectableNodes(this, elements)
-        for (let target in connectableNodes) {
-            console.log(connectableNodes[target])
-            let connectable = cy.getElementById(connectableNodes[target]['id'])
-            connectable.style('events', 'yes')
-            connectable.style('border-width', 2)
-            connectable.style('border-color', 'lime')
-            // connectable.style('border-style', 'double')
-        }
-    });
-    // cy.on('mouseover', 'node', function (event) {//         console.log(event)
-    //     // console.log(this.id())
-    //     this.style('background-color', '#3050a0')
-    // });
-    cy.on('tapdragout', 'node', function (event) {
-        // console.log(event)
+    cy.on('select tapdragover tapdragout cyedgehandles.start cyedgehandles.addpreview cyedgehandles.removepreview cyedgehandles.stop cyedgehandles.cancel cyedgehandles.hoverover cyedgehandles.previewon', 'node', function (e) {
+        event = e.type + (e.namespace || '')
+        console.log(event)
         // console.log(this);
-        this.style('background-color', '#505050')
-        if (state == 'started') return
-        // if (state == 'started') {
-        for (let target in connectableNodes) {
-            console.log(connectableNodes[target])
-            let connectable = cy.getElementById(connectableNodes[target]['id'])
-            connectable.style('border-width', 0)
+        switch (event) {
+            case 'tapdragover':
+                SetChildren()
+                // this.activate()
+                // this.select()
+                // this.style('background-color', '#3050a0')
+                connectableNodes = getConnectableNodes(this, elements)
+                connectableNodes.activate();
+                break
+
+            case 'cyedgehandles.cancel':
+                // this.unactivate()
+                // if (lastEvent == 'start') return
+                // this.style('background-color', '#505050')
+                // for (let target in connectableNodes) {
+                // let connectable = cy.getElementById(connectableNodes[target]['id'])
+                // connectable.style('border-width', 0)
+                // }
+                break
+
+            case 'start':
+                break
+
+            case 'addpreview':
+                break
+
+            case 'removepreview':
+                break
         }
-        // }
+        lastEvent = event
     });
-    // cy.on('mouseout', 'node', function (event) {
-    //             console.log(event)
-    //     console.log(this);
-    //     this.style('background-color', '#505050')
+    // cy.on('tapdragover', 'node', function (event) {
+    //     console.log(this.id())
+    //     if (state == 'started') return
+    //     this.style('background-color', '#3050a0')
+    //     connectableNodes = getConnectableNodes(this, elements)
+    //     for (let target in connectableNodes) {
+    //         // console.log(connectableNodes[target])
+    //         let connectable = cy.getElementById(connectableNodes[target]['id'])
+    //         connectable.style('events', 'yes')
+    //         connectable.style('border-width', 2)
+    //         connectable.style('border-color', 'lime')
+    //         // connectable.style('border-style', 'double')
+    //     }
     // });
-    cy.on('cyedgehandles.start', 'node', function (e) {
-        state = 'started'
-        source = this
-        // cy.nodes().style('events', 'no')
-        // for (let target in connectableNodes) {
-        //     console.log(connectableNodes[target])
-        //     let connectable = cy.getElementById(connectableNodes[target]['id'])
-        //     connectable.style('events', 'yes')
-        //     connectable.style('border-width', 2)
-        //     connectable.style('border-color', 'blue')
-        //     connectable.style('border-style', 'solid')
-        // }
-    });
-    cy.on('cyedgehandles.addpreview', 'node', function (e) {
-        target = this
-        state = 'preview'
-        lastEvent = e
-        console.log(e);
+    // cy.on('tapdragout', 'node', function (event) {
+    //     if (state == 'started') return
+    //     this.style('background-color', '#505050')
+    //     for (let target in connectableNodes) {
+    //         let connectable = cy.getElementById(connectableNodes[target]['id'])
+    //         connectable.style('border-width', 0)
+    //     }
+    // });
+    // cy.on('cyedgehandles.start', 'node', function (e) {
+    //     state = 'started'
+    //     source = this
+    // });
+    // cy.on('cyedgehandles.addpreview', 'node', function (e) {
+    //     target = this
 
-        cy.style().selector('.edgehandles-ghost-edge').style({
-            visibility: 'hidden'
-        }).update()
+    //     cy.style().selector('.edgehandles-ghost-edge').style({
+    //         visibility: 'hidden'
+    //     }).update()
 
 
-        function getConnections(source, target) {
-            targets = []
-            for (output of source._private.data.outputs[0].output) {
-                for (input of target._private.data.inputs[0].input) {
-                    if (output.jAttr.type == input.jAttr.type) {
-                        targets.push({ 'source': output.jAttr.name, 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name })
-                    }
-                }
-            }
-            return targets
-        }
+    //     function getConnections(source, target) {
+    //         targets = []
+    //         for (output of source._private.data.outputs[0].output) {
+    //             for (input of target._private.data.inputs[0].input) {
+    //                 if (output.jAttr.type == input.jAttr.type) {
+    //                     targets.push({ 'source': output.jAttr.name, 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name })
+    //                 }
+    //             }
+    //         }
+    //         return targets
+    //     }
 
-        edgeLabels = getConnections(source, target)
-        console.log(edgeLabels)
-        // edgeLabels['label'] = 'euenveviowd'
-        // cy.style().selector('.edgehandles-preview').style('label', edgeLabels['type']).update()
-        cy.style().selector('.edgehandles-preview').style('label', edgeLabels[0]['type']).update()
-    });
-    cy.on('cyedgehandles.removepreview', 'node', function (e) {
-        cy.style().selector('.edgehandles-ghost-edge').style({
-            visibility: 'visible'
-        }).update()
-        if (state == 'preview') {
-            for (let target in connectableNodes) {
-                console.log(connectableNodes[target])
-                let connectable = cy.getElementById(connectableNodes[target]['id'])
-                connectable.style('border-width', 0)
-            }
-        }
-        console.log('HEJ');
+    //     edgeLabels = getConnections(source, target)
+    //     // console.log(edgeLabels)
+    //     // edgeLabels['label'] = 'euenveviowd'
+    //     // cy.style().selector('.edgehandles-preview').style('label', edgeLabels['type']).update()
+    //     cy.style().selector('.edgehandles-preview').style('label', edgeLabels[0]['type']).update()
+    // });
+    // cy.on('cyedgehandles.removepreview', 'node', function (e) {
 
-    });
+    //     // cy.style().selector('.edgehandles-ghost-edge').style({
+    //     //     visibility: 'visible'
+    //     // }).update()
+    //     // if (state == 'preview') {
+    //     //     for (let target in connectableNodes) {
+    //     //         console.log(connectableNodes[target])
+    //     //         let connectable = cy.getElementById(connectableNodes[target]['id'])
+    //     //         connectable.style('border-width', 0)
+    //     //     }
+    //     // }
+    //     // console.log('HEJ');
+
+    // });
 
     var layout = cy.nodes().layout({
         name: 'grid',
