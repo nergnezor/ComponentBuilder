@@ -81,7 +81,6 @@ function parseXml(path) {
     let elements = []
     components.forEach(function (component) {
         component.label = capitalizeFirstLetter(component.jAttr.name).replace(/_/g, ' ')
-        component.compatible = []
         elements.push({
             data: component,
         })
@@ -94,106 +93,74 @@ function parseXml(path) {
         userZoomingEnabled: false,
         userPanningEnabled: false,
         autoungrabify: true,
-        style: [{
-            //     selector: 'core',
-            //     css: {
-            //         'active-bg-color': 'red',
-            //         'selection-box-color': 'red',
-            //         'selection-box-border-color': 'red',
-            //         'overlay-color': 'red'
-            //     }
-            // }, {
-            selector: ':active',
-            css: {
-                'overlay-color': '#ff0000',
-                // 'overlay-opacity': 0,
-                'overlay-padding': 0,
-            }
-        }, {
-            selector: ':selected',
-            style: {
-                'overlay-color': 'green',
-                'overlay-opacity': 0,
-                'background-color': '#FF5050',
-            }
-        }, {
-            selector: 'node',
-            style: {
-                shape: 'roundrectangle',
-                'background-color': '#505050',
-                content: 'data(label)',
-                'text-wrap': 'wrap',
-                'text-max-width': 100,
-                'text-valign': 'center',
-                color: 'white',
-                width: 'label',
-                height: 'label',
-                padding: '10px',
-                // 'font-size': '5'
-            }
-        }, {
-            selector: 'edge',
-            style: {
-                color: 'white',
-                'text-outline-color': 'black',
-                'text-outline-width': 1,
-                'width': 2,
-                'line-style': 'solid',
-                'target-arrow-color': '#ccc',
-                'target-arrow-shape': 'triangle',
-                'curve-style': 'unbundled-bezier',
-                'control-point-distances': [10, 50],
-                'control-point-weights': [0.1, 0.7],
-                // 'curve-style': 'segments',
-                // 'segment-distances': '100 20',
-                // 'text-rotation': 'autorotate',
-                // 'label': 'data(label)',
-                // 'source-label': 'data(label)',
-                // 'target-label': 'target',
-                // 'source-text-offset': 50,
-                // 'target-text-offset': 50
-            }
-        }, {
-            selector: 'edge.unbundled-bezier',
-            css: {
-                'curve-style': 'unbundled-bezier'
-            }
-        }, {
-            selector: '.edgehandles-hover',
-            css: {
-                'background-color': 'purple',
-                'border-width': 2,
-                'border-color': 'yellow'
-            }
-            // }, {
-            //     selector: '.edgehandles-source',
-            //     css: {
-            //         'border-width': 2,
-            //         'border-color': 'yellow'
-            //     }
-            // }, {
-            //     selector: '.edgehandles-target',
-            //     css: {
-            //         'border-width': 2,
-            //         'border-color': 'cyan'
-            //     }
-            // }, {
-            //     selector: '.edgehandles-presumptive-target',
-            //     css: {
-            //         'line-color': 'blue',
-            //         'target-arrow-color': 'blue',
-            //         'source-arrow-color': 'green'
-            //     }
-        }, {
-            selector: '.edgehandles-ghost-edge',
-            css: {
-                'line-style': 'dotted',
-            }
-            // }, {
-            //     selector: '.edgehandles-preview',
-            //     css: {
-            //     }
-        }],
+        style: [
+            {
+                selector: '.default',
+                style: {
+                    'background-color': '#505050',
+                }
+            },
+            {
+                selector: ':active',
+                style: {
+                    'background-color': '#FF5050',
+                }
+            },
+            {
+                selector: 'node',
+                style: {
+                    shape: 'roundrectangle',
+                    // 'background-color': '#505050',
+                    content: 'data(label)',
+                    'text-wrap': 'wrap',
+                    'text-max-width': 100,
+                    'text-valign': 'center',
+                    color: 'white',
+                    width: 'label',
+                    height: 'label',
+                    padding: '10px',
+                    'overlay-opacity': 0,
+                }
+            },
+            {
+                selector: 'edge',
+                style: {
+                    color: 'white',
+                    'text-outline-color': 'black',
+                    'text-outline-width': 1,
+                    'width': 2,
+                    'line-style': 'solid',
+                    'target-arrow-color': '#ccc',
+                    'target-arrow-shape': 'triangle',
+                    'curve-style': 'unbundled-bezier',
+                    'control-point-distances': [10, 50],
+                    'control-point-weights': [0.1, 0.7],
+                    // 'curve-style': 'segments',
+                    // 'segment-distances': '100 20',
+                    // 'text-rotation': 'autorotate',
+                    // 'label': 'data(label)',
+                    // 'source-label': 'data(label)',
+                    // 'target-label': 'target',
+                    // 'source-text-offset': 50,
+                    // 'target-text-offset': 50
+                }
+            },
+            {
+                selector: 'edge.unbundled-bezier',
+                css: {
+                    'curve-style': 'unbundled-bezier'
+                }
+            },
+            {
+                selector: '.edgehandles-ghost-edge',
+                css: {
+                    'line-style': 'dotted',
+                }
+                // }, {
+                //     selector: '.edgehandles-preview',
+                //     css: {
+                //     }
+            }],
 
         layout: {
             name: 'grid',
@@ -204,49 +171,20 @@ function parseXml(path) {
         elements: elements,
     });
 
-    function SetChildren() {
-        let senders = cy.filter('node[outputs]')
-        let receivers = cy.filter('node[inputs]')
-        // console.log(receivers);
-        // receivers.forEach(function (receiver) {
-        //     for (let input of receiver.data('inputs') [0].input) {
-        //         senders.forEach(function (sender) {
-        //             for (let output of sender.data('outputs') [0].output) {
-        //                 if (output.jAttr.type == input.jAttr.type) {
-        //                     sender.data('compatible').push(receiver)
-        //                     return
-        //                 }
-        //             }
-        //         })
-        //     }
-        // })
-        senders.forEach(function (sender) {
-            // if (sender.data('label') != 'Scanner') continue
-            let nodes = receivers.filter(function (ele) {
-                for (let input of ele.data('inputs') [0].input) {
+    cy.ready(function (e) {
+        /* Set receivers */
+        cy.filter('node[outputs]').forEach(function (sender) {
+            sender.data('receivers', cy.filter('node[inputs]').filter(function (receiver) {
+                for (let input of receiver.data('inputs') [0].input) {
                     for (let output of sender.data('outputs') [0].output) {
                         return output.jAttr.type == input.jAttr.type
                     }
                 }
-            })
-            console.log(sender.data('label'))
-            nodes.forEach(function (ele) {
-                console.log(ele.data('label'));
-            })
-            console.log('');
+            }))
         })
-    }
-    function getConnectableNodes(source, elements) {
-        let nodes = cy.filter('node[inputs]')
-        nodes = nodes.filter(function (ele) {
-            for (let input of ele.data('inputs') [0].input) {
-                for (let output of source.data('outputs') [0].output) {
-                    return output.jAttr.type == input.jAttr.type
-                }
-            }
-        })
-        return nodes
-    }
+        cy.nodes().classes('default')
+    })
+
     cy.edgehandles({
         // toggleOffOnLeave: true,
         stackOrder: 1,
@@ -254,111 +192,64 @@ function parseXml(path) {
         handleSize: 300,
         handleColor: 'rgba(32, 45, 255, 0)',
         handlePosition: 'middle middle',
-        // start: function (sourceNode) {
-        //     // let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
-        //     // cy.nodes().style('events', 'no')
-        //     // connectable.animate({
-        //     //     style: { 'background-color': 'green'}
-        //     // })
-        //     // connectable.style({ 'events': 'yes' })
-        // },
-        // stop: function (sourceNode) {
-        //     cy.nodes().style({ 'events': 'yes', 'background-color': '#505050' })
-        //     // let connectable = cy.nodes(`node[col = ${sourceNode._private.data.col + 1}]`)
-        //     // connectable.style({ 'background-color': '#505050', 'border-width': 0 })
-        // },
-        // complete: function (sourceNode, targetNodes, addedEntities) {
-        //     cy.nodes().style({ 'events': 'yes', 'background-color': '#505050' })
-        //     // addedEntities[0].style({'source-label': edgeLabels['source'], 'target-label': edgeLabels['target']})
-        // },
-    });
+    })
 
-    cy.on('select tapdragover tapdragout cyedgehandles.start cyedgehandles.addpreview cyedgehandles.removepreview cyedgehandles.stop cyedgehandles.cancel cyedgehandles.hoverover cyedgehandles.previewon', 'node', function (e) {
-        event = e.type + (e.namespace || '')
+    function getConnections(source, target) {
+        targets = []
+        for (output of source.data('outputs')[0].output) {
+            for (input of target.data('inputs')[0].input) {
+                if (output.jAttr.type == input.jAttr.type) {
+                    targets.push({ 'source': output.jAttr.name, 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name })
+                }
+            }
+        }
+        return targets
+    }
+
+    
+    cy.on('select tapdragover tapdragout cyedgehandles.start cyedgehandles.addpreview cyedgehandles.removepreview cyedgehandles.stop cyedgehandles.cancel cyedgehandles.hoverover cyedgehandles.complete', 'node', function (e, e2, e3) {
+        // event = e.type + (e.namespace || '')
+        event = (e.namespace || e.type).replace('.', '')
+        console.log(e)
         console.log(event)
-        // console.log(this);
         switch (event) {
             case 'tapdragover':
-                SetChildren()
-                // this.activate()
-                // this.select()
-                // this.style('background-color', '#3050a0')
-                connectableNodes = getConnectableNodes(this, elements)
-                connectableNodes.activate();
-                break
-
-            case 'cyedgehandles.cancel':
-                // this.unactivate()
-                // if (lastEvent == 'start') return
-                // this.style('background-color', '#505050')
-                // for (let target in connectableNodes) {
-                // let connectable = cy.getElementById(connectableNodes[target]['id'])
-                // connectable.style('border-width', 0)
-                // }
-                break
-
+            this.data('receivers').activate()
+            break
+            
+            case 'tapdragout':
+            if (lastEvent != 'start')
+            this.data('receivers').unactivate()
+            break
+            
+            case 'cancel':
+            this.data('receivers').unactivate()
+            break
+            
             case 'start':
-                break
-
+            break
+            
             case 'addpreview':
-                break
-
+            cy.style().selector('.edgehandles-ghost-edge').style({
+                visibility: 'hidden'
+            }).update()
+            edgeLabels = getConnections(this, e.target)
+            console.log(edgeLabels)
+            // edgeLabels['label'] = 'euenveviowd'
+            // cy.style().selector('.edgehandles-preview').style('label', edgeLabels['type']).update()
+            cy.style().selector('.edgehandles-preview').style('label', edgeLabels[0]['type']).update()
+            break
+            
             case 'removepreview':
+                cy.style().selector('.edgehandles-ghost-edge').style({
+                    visibility: 'visible'
+                }).update()
                 break
         }
         lastEvent = event
     });
-    // cy.on('tapdragover', 'node', function (event) {
-    //     console.log(this.id())
-    //     if (state == 'started') return
-    //     this.style('background-color', '#3050a0')
-    //     connectableNodes = getConnectableNodes(this, elements)
-    //     for (let target in connectableNodes) {
-    //         // console.log(connectableNodes[target])
-    //         let connectable = cy.getElementById(connectableNodes[target]['id'])
-    //         connectable.style('events', 'yes')
-    //         connectable.style('border-width', 2)
-    //         connectable.style('border-color', 'lime')
-    //         // connectable.style('border-style', 'double')
-    //     }
-    // });
-    // cy.on('tapdragout', 'node', function (event) {
-    //     if (state == 'started') return
-    //     this.style('background-color', '#505050')
-    //     for (let target in connectableNodes) {
-    //         let connectable = cy.getElementById(connectableNodes[target]['id'])
-    //         connectable.style('border-width', 0)
-    //     }
-    // });
-    // cy.on('cyedgehandles.start', 'node', function (e) {
-    //     state = 'started'
-    //     source = this
-    // });
-    // cy.on('cyedgehandles.addpreview', 'node', function (e) {
-    //     target = this
-
-    //     cy.style().selector('.edgehandles-ghost-edge').style({
-    //         visibility: 'hidden'
-    //     }).update()
 
 
-    //     function getConnections(source, target) {
-    //         targets = []
-    //         for (output of source._private.data.outputs[0].output) {
-    //             for (input of target._private.data.inputs[0].input) {
-    //                 if (output.jAttr.type == input.jAttr.type) {
-    //                     targets.push({ 'source': output.jAttr.name, 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name })
-    //                 }
-    //             }
-    //         }
-    //         return targets
-    //     }
-
-    //     edgeLabels = getConnections(source, target)
-    //     // console.log(edgeLabels)
-    //     // edgeLabels['label'] = 'euenveviowd'
-    //     // cy.style().selector('.edgehandles-preview').style('label', edgeLabels['type']).update()
-    //     cy.style().selector('.edgehandles-preview').style('label', edgeLabels[0]['type']).update()
     // });
     // cy.on('cyedgehandles.removepreview', 'node', function (e) {
 
