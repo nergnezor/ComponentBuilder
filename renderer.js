@@ -98,12 +98,21 @@ function parseXml(path) {
                 selector: '.default',
                 style: {
                     'background-color': '#505050',
+                    // 'z-index': 9007199254740992
+                }
+            },
+            {
+                selector: '.prospects',
+                style: {
+                    'background-color': '#507050',
+                    // 'z-index': 9007199254740992
                 }
             },
             {
                 selector: ':active',
                 style: {
                     'background-color': '#FF5050',
+                    'border-width': 2
                 }
             },
             {
@@ -120,6 +129,7 @@ function parseXml(path) {
                     height: 'label',
                     padding: '10px',
                     'overlay-opacity': 0,
+                    'border-color': 'yellow'
                 }
             },
             {
@@ -136,9 +146,10 @@ function parseXml(path) {
                     'control-point-distances': [10, 50],
                     'control-point-weights': [0.1, 0.7],
                     // 'curve-style': 'segments',
-                    // 'segment-distances': '100 20',
-                    // 'text-rotation': 'autorotate',
+                    'segment-distances': '100 20',
+                    'text-rotation': 'autorotate',
                     // 'label': 'data(label)',
+                    // 'label': 'hej',
                     // 'source-label': 'data(label)',
                     // 'target-label': 'target',
                     // 'source-text-offset': 50,
@@ -146,21 +157,36 @@ function parseXml(path) {
                 }
             },
             {
-                selector: 'edge.unbundled-bezier',
-                css: {
-                    'curve-style': 'unbundled-bezier'
+                selector: '.eh-ghost-edge',
+                style: {
+                    'line-style': 'dotted',
                 }
             },
             {
-                selector: '.edgehandles-ghost-edge',
-                css: {
-                    'line-style': 'dotted',
+                selector: '.eh-handle',
+                style: {
+                    width: 100,
+                    height: 50,
+                    // 'z-index': 1
+                    // 'events': ['tapdragover', 'no'],
+                    // 'background-color': '#FF5050',
+                    'opacity': 0,
+                    // 'display': 'none'
                 }
-                // }, {
-                //     selector: '.edgehandles-preview',
-                //     css: {
-                //     }
-            }],
+            },
+            {
+                selector: '.eh-source',
+                style: {
+                    'border-width': 2,
+                }
+            },
+            {
+                selector: '.eh-preview',
+                style: {
+                    'border-width': 2,
+                }
+            }
+        ],
 
         layout: {
             name: 'grid',
@@ -170,6 +196,11 @@ function parseXml(path) {
         },
         elements: elements,
     });
+
+    eh = cy.edgehandles({
+        hoverDelay: 0,
+        handlePosition: 'middle middle',
+    })
 
     cy.ready(function (e) {
         /* Set receivers */
@@ -185,19 +216,10 @@ function parseXml(path) {
         cy.nodes().classes('default')
     })
 
-    cy.edgehandles({
-        // toggleOffOnLeave: true,
-        stackOrder: 1,
-        hoverDelay: 0,
-        handleSize: 300,
-        handleColor: 'rgba(32, 45, 255, 0)',
-        handlePosition: 'middle middle',
-    })
-
     function getConnections(source, target) {
         targets = []
-        for (output of source.data('outputs')[0].output) {
-            for (input of target.data('inputs')[0].input) {
+        for (output of source.data('outputs') [0].output) {
+            for (input of target.data('inputs') [0].input) {
                 if (output.jAttr.type == input.jAttr.type) {
                     targets.push({ 'source': output.jAttr.name, 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name })
                 }
@@ -206,66 +228,58 @@ function parseXml(path) {
         return targets
     }
 
-    
-    cy.on('select tapdragover tapdragout cyedgehandles.start cyedgehandles.addpreview cyedgehandles.removepreview cyedgehandles.stop cyedgehandles.cancel cyedgehandles.hoverover cyedgehandles.complete', 'node', function (e, e2, e3) {
-        // event = e.type + (e.namespace || '')
-        event = (e.namespace || e.type).replace('.', '')
-        console.log(e)
-        console.log(event)
-        switch (event) {
-            case 'tapdragover':
-            this.data('receivers').activate()
-            break
-            
-            case 'tapdragout':
-            if (lastEvent != 'start')
-            this.data('receivers').unactivate()
-            break
-            
-            case 'cancel':
-            this.data('receivers').unactivate()
-            break
-            
-            case 'start':
-            break
-            
-            case 'addpreview':
-            cy.style().selector('.edgehandles-ghost-edge').style({
-                visibility: 'hidden'
-            }).update()
-            edgeLabels = getConnections(this, e.target)
-            console.log(edgeLabels)
-            // edgeLabels['label'] = 'euenveviowd'
-            // cy.style().selector('.edgehandles-preview').style('label', edgeLabels['type']).update()
-            cy.style().selector('.edgehandles-preview').style('label', edgeLabels[0]['type']).update()
-            break
-            
-            case 'removepreview':
-                cy.style().selector('.edgehandles-ghost-edge').style({
-                    visibility: 'visible'
-                }).update()
-                break
+    cy.on('ehshow ehhide ehstart ehcomplete ehstop ehcancel ehhoverover ehhoverout ehpreviewon ehpreviewoff tapdragover tapdragout',
+        function (event, sourceNode, targetNode, addedEles) {
+            console.log(event.type)
+            switch (event.type) {
+                case 'ehshow':
+                    // sourceNode.activate()
+                    // console.log(sourceNode.data('receivers'));
+                    // sourceNode.data('receivers').activate()
+                    sourceNode.data('receivers').addClass('prospects')
+                    console.log(cy.nodes().filter('.prospects'));
+
+                    // console.log(cy.nodes().filter('active'))
+                    // this.data('receivers').activate()
+                    break
+
+                case 'tapdragover':
+                    break
+
+                case 'ehstop':
+                    cy.nodes().filter('.prospects').removeClass('prospects')
+                    break
+                case 'tapdragout':
+                    if (lastEvent != 'ehstart' && event.target.hasClass('eh-handle')) {
+                        cy.nodes().filter('.prospects').removeClass('prospects')
+                        eh.hide()
+                    }
+                    break
+
+                case 'cancel':
+                    // this.data('receivers').unactivate()
+                    break
+
+                case 'ehstart':
+                    break
+
+                case 'ehpreviewon':
+                    cy.style().selector('.eh-ghost-edge').style({visibility: 'hidden'}).update()
+                    edgeLabels = getConnections(sourceNode, targetNode)
+                    cy.edges().last().style('label', edgeLabels[0]['type'])
+                    break
+                case 'ehcomplete':
+                case 'ehpreviewoff':
+                    // cy.style().selector('edge').style('label', '').update()
+                    cy.style().selector('.eh-ghost-edge').style('label', '').update()
+                    cy.style().selector('.eh-ghost-edge').style({
+                        visibility: 'visible'
+                    }).update()
+                    break
+            }
+            lastEvent = event.type
         }
-        lastEvent = event
-    });
-
-
-    // });
-    // cy.on('cyedgehandles.removepreview', 'node', function (e) {
-
-    //     // cy.style().selector('.edgehandles-ghost-edge').style({
-    //     //     visibility: 'visible'
-    //     // }).update()
-    //     // if (state == 'preview') {
-    //     //     for (let target in connectableNodes) {
-    //     //         console.log(connectableNodes[target])
-    //     //         let connectable = cy.getElementById(connectableNodes[target]['id'])
-    //     //         connectable.style('border-width', 0)
-    //     //     }
-    //     // }
-    //     // console.log('HEJ');
-
-    // });
+    )
 
     var layout = cy.nodes().layout({
         name: 'grid',

@@ -18,12 +18,13 @@
   "license": "CC0-1.0",
   "devDependencies": {
     "@types/electron": "^1.6.10",
-    "@types/electron-window-state": "^2.0.30",
-    "electron": "~1.6.2",
+    "@types/electron-window-state": "^2.0.31",
+    "electron": "^1.6.15",
+    "electron-rebuild": "^1.7.3",
     "electron-window-state": "^4.1.1"
   },
   "dependencies": {
-    "cytoscape": "^3.1.4",
-    "cytoscape-edgehandles": "^2.13.2"
+    "cytoscape": "^3.2.8",
+    "cytoscape-edgehandles": "^3.1.0"
   }
 }
