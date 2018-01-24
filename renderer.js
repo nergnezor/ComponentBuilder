@@ -81,6 +81,7 @@ function parseXml(path) {
     let elements = []
     components.forEach(function (component) {
         component.label = capitalizeFirstLetter(component.jAttr.name).replace(/_/g, ' ')
+        component.prospect = false
         elements.push({
             data: component,
         })
@@ -102,10 +103,10 @@ function parseXml(path) {
                 }
             },
             {
-                selector: '.prospects',
+                selector: '.prospect',
                 style: {
                     'background-color': '#507050',
-                    // 'z-index': 9007199254740992
+                    // prospect: true
                 }
             },
             {
@@ -129,7 +130,7 @@ function parseXml(path) {
                     height: 'label',
                     padding: '10px',
                     'overlay-opacity': 0,
-                    'border-color': 'yellow'
+                    'border-color': 'yellow',
                 }
             },
             {
@@ -148,6 +149,7 @@ function parseXml(path) {
                     // 'curve-style': 'segments',
                     'segment-distances': '100 20',
                     'text-rotation': 'autorotate',
+                    // 'z-index': 9007199254740992
                     // 'label': 'data(label)',
                     // 'label': 'hej',
                     // 'source-label': 'data(label)',
@@ -206,9 +208,9 @@ function parseXml(path) {
         /* Set receivers */
         cy.filter('node[outputs]').forEach(function (sender) {
             sender.data('receivers', cy.filter('node[inputs]').filter(function (receiver) {
-                for (let input of receiver.data('inputs') [0].input) {
-                    for (let output of sender.data('outputs') [0].output) {
-                        return output.jAttr.type == input.jAttr.type
+                for (let input of receiver.data('inputs')[0].input) {
+                    for (let output of sender.data('outputs')[0].output) {
+                        return output.jAttr.type == input.jAttr.type && receiver !== sender
                     }
                 }
             }))
@@ -218,8 +220,8 @@ function parseXml(path) {
 
     function getConnections(source, target) {
         targets = []
-        for (output of source.data('outputs') [0].output) {
-            for (input of target.data('inputs') [0].input) {
+        for (output of source.data('outputs')[0].output) {
+            for (input of target.data('inputs')[0].input) {
                 if (output.jAttr.type == input.jAttr.type) {
                     targets.push({ 'source': output.jAttr.name, 'type': output.jAttr.type.replace('struct ', ''), 'target': input.jAttr.name })
                 }
@@ -228,43 +230,45 @@ function parseXml(path) {
         return targets
     }
 
-    cy.on('ehshow ehhide ehstart ehcomplete ehstop ehcancel ehhoverover ehhoverout ehpreviewon ehpreviewoff tapdragover tapdragout',
+    cy.on('ehshow ehhide ehstart ehcomplete ehstop ehcancel ehpreviewon ehpreviewoff tapdragout',
         function (event, sourceNode, targetNode, addedEles) {
             console.log(event.type)
             switch (event.type) {
                 case 'ehshow':
-                    // sourceNode.activate()
-                    // console.log(sourceNode.data('receivers'));
-                    // sourceNode.data('receivers').activate()
-                    sourceNode.data('receivers').addClass('prospects')
-                    console.log(cy.nodes().filter('.prospects'));
+                    sourceNode.data('receivers').classes('prospect')
+                    cy.nodes().filter('.default').style('events', 'no')
+                    break
 
-                    // console.log(cy.nodes().filter('active'))
-                    // this.data('receivers').activate()
+                case 'ehhide':
+                    cy.nodes().filter('.prospect').classes('default')
+                    cy.nodes().filter('.default').style('events', 'yes')
                     break
 
                 case 'tapdragover':
                     break
 
                 case 'ehstop':
-                    cy.nodes().filter('.prospects').removeClass('prospects')
+                    eh.hide()
                     break
                 case 'tapdragout':
-                    if (lastEvent != 'ehstart' && event.target.hasClass('eh-handle')) {
-                        cy.nodes().filter('.prospects').removeClass('prospects')
+                    if (event.target.hasClass('default')) return
+                    if (lastEvent == 'ehstart') return
+                    if (lastEvent == 'ehpreviewoff') return
+                    // if (lastEvent == 'tapdragout'){// && event.target.hasClass('eh-handle')) {
+                        console.log(cy.edges().last());
+                        
                         eh.hide()
-                    }
+                    // }
                     break
 
                 case 'cancel':
-                    // this.data('receivers').unactivate()
                     break
 
                 case 'ehstart':
                     break
 
                 case 'ehpreviewon':
-                    cy.style().selector('.eh-ghost-edge').style({visibility: 'hidden'}).update()
+                    cy.style().selector('.eh-ghost-edge').style({ visibility: 'hidden' }).update()
                     edgeLabels = getConnections(sourceNode, targetNode)
                     cy.edges().last().style('label', edgeLabels[0]['type'])
                     break
