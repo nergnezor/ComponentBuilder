@@ -98,72 +98,106 @@ function parseXml(path) {
             {
                 selector: '.default',
                 style: {
-                    'background-color': '#505050',
+                    // 'background-color': '#505050',
+                    'border-opacity': 0,
                     // 'z-index': 9007199254740992
                 }
             },
             {
                 selector: '.prospect',
                 style: {
-                    'background-color': '#507050',
+                    // 'background-color': '#507050',
+                    'border-color': 'white',
+                    'border-opacity': 1,
                     // prospect: true
+                },
+                print: function (params) {
+                    console.log('hej');
+                    
                 }
             },
             {
                 selector: ':active',
                 style: {
-                    'background-color': '#FF5050',
-                    'border-width': 2
+                    // 'background-color': '#FF5050',
+                    // 'border-width': 2
+                    'border-opacity': 1,
+                    'border-color': 'orange'
                 }
             },
             {
                 selector: 'node',
                 style: {
                     shape: 'roundrectangle',
-                    // 'background-color': '#505050',
+                    // opacity: 0.9,
+                    'background-color': '#505050',
                     content: 'data(label)',
                     'text-wrap': 'wrap',
                     'text-max-width': 100,
                     'text-valign': 'center',
+                    'font-size': 12,
                     color: 'white',
                     width: 'label',
                     height: 'label',
-                    padding: '10px',
+                    padding: '8px',
                     'overlay-opacity': 0,
-                    'border-color': 'yellow',
-                }
+                    'border-width': 1,
+                },
             },
             {
                 selector: 'edge',
                 style: {
                     color: 'white',
-                    'text-outline-color': 'black',
-                    'text-outline-width': 1,
-                    'width': 2,
+                    'font-size': 12,
+                    // 'text-outline-color': 'black',
+                    // 'text-outline-width': 1,
+                    'width': 1,
                     'line-style': 'solid',
                     'target-arrow-color': '#ccc',
                     'target-arrow-shape': 'triangle',
                     'curve-style': 'unbundled-bezier',
-                    'control-point-distances': [10, 50],
-                    'control-point-weights': [0.1, 0.7],
-                    // 'curve-style': 'segments',
-                    'segment-distances': '100 20',
+                    // 'control-point-distances': [-100, 100],
+                    'control-point-weights': [0.1, 0.9],
                     'text-rotation': 'autorotate',
+                    'control-point-distances': function (ele) {
+                        // console.log(ele.source());
+                        let distances = [0, 0]
+                        if (ele.target().data('label')) {
+                            // console.log(ele);
+
+                            // let ySource = ele.source().position().y;
+                            // var yTarget = ele.target().position().y;
+                            let dx = ele.target().position().x - ele.source().position().x
+                            let dy = ele.target().position().y - ele.source().position().y
+                            let dcol = ele.target().data('col') - ele.source().data('col')
+                            let distance = (dy / 2) / (dcol + 1 / 1)
+                            // if (ySource < yTarget) return [-100, 100]
+                            // else return [100, -100]
+                            // distances = [dy > 0 ? -100 : 100, dy > 0 ? 100 : -100]
+                            distances = [-distance, distance]
+
+                            // var str = '' + Math.abs(pos2 - pos1) + 'px -' + Math.abs(pos2 - pos1) + 'px';
+
+                            // console.log(pos1, pos2, str);
+                        }
+                        return distances;
+                    },
                     // 'z-index': 9007199254740992
                     // 'label': 'data(label)',
                     // 'label': 'hej',
                     // 'source-label': 'data(label)',
                     // 'target-label': 'target',
                     // 'source-text-offset': 50,
-                    // 'target-text-offset': 50
+                    'target-text-offset': 50,
+                    'target-text-margin-y': -10
                 }
             },
-            {
-                selector: '.eh-ghost-edge',
-                style: {
-                    'line-style': 'dotted',
-                }
-            },
+            // {
+            //     selector: '.eh-ghost-edge',
+            //     style: {
+            //         'line-style': 'dotted',
+            //     }
+            // },
             {
                 selector: '.eh-handle',
                 style: {
@@ -179,13 +213,13 @@ function parseXml(path) {
             {
                 selector: '.eh-source',
                 style: {
-                    'border-width': 2,
+                    'border-color': 'yellow',
                 }
             },
             {
                 selector: '.eh-preview',
                 style: {
-                    'border-width': 2,
+                    'border-color': 'orange',
                 }
             }
         ],
@@ -229,17 +263,21 @@ function parseXml(path) {
         }
         return targets
     }
-
+    let color = ['hotpink', 'orchid', 'mediumpurple', 'LightSkyBlue', 'MediumAquaMarine','LightSalmon', 'Coral']
+    // let color = [hsl(270,60%, 70%)]
     cy.on('ehshow ehhide ehstart ehcomplete ehstop ehcancel ehpreviewon ehpreviewoff tapdragout',
         function (event, sourceNode, targetNode, addedEles) {
-            console.log(event.type)
+            // console.log(event.type)
             switch (event.type) {
                 case 'ehshow':
+                    sourceNode.activate()
+                    
                     sourceNode.data('receivers').classes('prospect')
                     cy.nodes().filter('.default').style('events', 'no')
                     break
-
-                case 'ehhide':
+                    
+                    case 'ehhide':
+                    cy.nodes(':active').unactivate()
                     cy.nodes().filter('.prospect').classes('default')
                     cy.nodes().filter('.default').style('events', 'yes')
                     break
@@ -255,9 +293,8 @@ function parseXml(path) {
                     if (lastEvent == 'ehstart') return
                     if (lastEvent == 'ehpreviewoff') return
                     // if (lastEvent == 'tapdragout'){// && event.target.hasClass('eh-handle')) {
-                        console.log(cy.edges().last());
-                        
-                        eh.hide()
+
+                    eh.hide()
                     // }
                     break
 
@@ -270,12 +307,15 @@ function parseXml(path) {
                 case 'ehpreviewon':
                     cy.style().selector('.eh-ghost-edge').style({ visibility: 'hidden' }).update()
                     edgeLabels = getConnections(sourceNode, targetNode)
-                    cy.edges().last().style('label', edgeLabels[0]['type'])
+                    // cy.edges().last().style('target-label', edgeLabels[0]['type'])
+                    cy.edges().last().style({ 'target-label': edgeLabels[0]['type'], 'line-color': color[(cy.edges().length - 2) % color.length] })
+
                     break
                 case 'ehcomplete':
                 case 'ehpreviewoff':
+                    cy.edges().last().style('target-label', '')
                     // cy.style().selector('edge').style('label', '').update()
-                    cy.style().selector('.eh-ghost-edge').style('label', '').update()
+                    // cy.style().selector('.eh-ghost-edge').style('label', '').update()
                     cy.style().selector('.eh-ghost-edge').style({
                         visibility: 'visible'
                     }).update()
