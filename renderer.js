@@ -98,7 +98,7 @@ function parseXml(path) {
             {
                 selector: '.default',
                 style: {
-                    // 'background-color': '#505050',
+                    'background-color': '#505050',
                     'border-opacity': 0,
                     // 'z-index': 9007199254740992
                 }
@@ -106,15 +106,12 @@ function parseXml(path) {
             {
                 selector: '.prospect',
                 style: {
+                    'background-color': '#505050',
                     // 'background-color': '#507050',
                     'border-color': 'white',
                     'border-opacity': 1,
                     // prospect: true
                 },
-                print: function (params) {
-                    console.log('hej');
-                    
-                }
             },
             {
                 selector: ':active',
@@ -130,7 +127,7 @@ function parseXml(path) {
                 style: {
                     shape: 'roundrectangle',
                     // opacity: 0.9,
-                    'background-color': '#505050',
+                    // 'background-color': '#505050',
                     content: 'data(label)',
                     'text-wrap': 'wrap',
                     'text-max-width': 100,
@@ -213,6 +210,7 @@ function parseXml(path) {
             {
                 selector: '.eh-source',
                 style: {
+                    'background-color': '#505090',
                     'border-color': 'yellow',
                 }
             },
@@ -252,7 +250,7 @@ function parseXml(path) {
         cy.nodes().classes('default')
     })
 
-    function getConnections(source, target) {
+    function getMatchingType(source, target) {
         targets = []
         for (output of source.data('outputs')[0].output) {
             for (input of target.data('inputs')[0].input) {
@@ -306,7 +304,7 @@ function parseXml(path) {
 
                 case 'ehpreviewon':
                     cy.style().selector('.eh-ghost-edge').style({ visibility: 'hidden' }).update()
-                    edgeLabels = getConnections(sourceNode, targetNode)
+                    edgeLabels = getMatchingType(sourceNode, targetNode)
                     // cy.edges().last().style('target-label', edgeLabels[0]['type'])
                     cy.edges().last().style({ 'target-label': edgeLabels[0]['type'], 'line-color': color[(cy.edges().length - 2) % color.length] })
 
@@ -316,9 +314,7 @@ function parseXml(path) {
                     cy.edges().last().style('target-label', '')
                     // cy.style().selector('edge').style('label', '').update()
                     // cy.style().selector('.eh-ghost-edge').style('label', '').update()
-                    cy.style().selector('.eh-ghost-edge').style({
-                        visibility: 'visible'
-                    }).update()
+                    cy.style().selector('.eh-ghost-edge').style({visibility: 'visible'}).update()
                     break
             }
             lastEvent = event.type
@@ -337,3 +333,5 @@ function parseXml(path) {
 }
 
 parseXml(__dirname + '/components.xml')
+console.log(document.styleSheets);
+
