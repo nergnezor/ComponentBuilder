@@ -2,29 +2,30 @@
   "name": "electron-quick-start",
   "version": "1.0.0",
   "description": "A minimal Electron application",
-  "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "build": "tsc",
+    "lint": "tslint -c tslint.json -p tsconfig.json",
+    "start": "npm run build && electron ./dist/main.js"
   },
   "repository": "https://github.com/electron/electron-quick-start",
   "keywords": [
-    "Electron",
-    "quick",
-    "start",
-    "tutorial",
-    "demo"
+    "Electron"
   ],
   "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {
     "@types/electron": "^1.6.10",
     "@types/electron-window-state": "^2.0.31",
-    "electron": "^1.6.15",
+    "@types/xml2json": "^0.10.0",
+    "electron": "^1.8.1",
     "electron-rebuild": "^1.7.3",
-    "electron-window-state": "^4.1.1"
+    "electron-window-state": "^4.1.1",
+    "tslint": "^5.9.1",
+    "typescript": "^2.6.2"
   },
   "dependencies": {
     "cytoscape": "^3.2.8",
-    "cytoscape-edgehandles": "^3.1.0"
+    "cytoscape-edgehandles": "^3.1.2",
+    "xml2json": "^0.11.0"
   }
 }

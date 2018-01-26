@@ -8,7 +8,7 @@
             "name": "Debug Main Process",
             "type": "node",
             "request": "launch",
-            "program": "${workspaceRoot}/main.js",
+            // "program": "${workspaceRoot}/main.js",
             "stopOnEntry": false,
             "args": [
                 "."
@@ -31,11 +31,12 @@
                 "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
             },
             "runtimeArgs": [
-                "${workspaceRoot}/main.js",
+                "${workspaceRoot}/dist/main.js",
                 "--remote-debugging-port=9222"
             ],
-            "webRoot": "${workspaceRoot}",
-            "sourceMaps": true
+            "sourceMaps": true,
+            "preLaunchTask": "build",
+            "webRoot": "${workspaceRoot}"
         }
     ]
 }
