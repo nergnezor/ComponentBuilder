@@ -32,11 +32,13 @@
             },
             "runtimeArgs": [
                 "${workspaceRoot}/dist/main.js",
-                "--remote-debugging-port=9222"
+                "--remote-debugging-port=9222",
             ],
             "sourceMaps": true,
             "preLaunchTask": "build",
-            "webRoot": "${workspaceRoot}"
+            "webRoot": "${workspaceRoot}",
+            "internalConsoleOptions": "neverOpen",
+            "breakOnLoad": true
         }
     ]
 }

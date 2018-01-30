@@ -18,71 +18,112 @@ ipc.on('selected-file', function (event, path) {
 function capitalizeFirstLetter(s) {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
-function findChildren(outputs, components, col) {
-    var newTypes = [];
-    var nRows = 0;
-    for (var _i = 0, outputs_1 = outputs; _i < outputs_1.length; _i++) {
-        var output = outputs_1[_i];
-        for (var _a = 0, components_1 = components; _a < components_1.length; _a++) {
-            var c2 = components_1[_a];
-            if (c2.col || !c2.inputs) {
-                continue;
-            }
-            for (var _b = 0, _c = c2.inputs.input; _b < _c.length; _b++) {
-                var input = _c[_b];
-                if (input.type == output.type) {
-                    c2.col = col + 1;
-                    ++nRows;
-                    if (c2.outputs) {
-                        for (var _d = 0, _e = c2.outputs.output; _d < _e.length; _d++) {
-                            var o = _e[_d];
-                            newTypes.push(o);
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-    }
-    if (newTypes.length) {
-        var l = findChildren(newTypes, components, col + 1);
-        if (l > nRows)
-            nRows = l;
-    }
-    return nRows;
-}
+// function findChildren(outputs: any, components: any, col: number) {
+//     let newTypes = []
+//     let nRows = 0
+//     for (let output of outputs) {
+//         for (let c2 of components) {
+//             if (c2.col || !c2.inputs) {
+//                 continue
+//             }
+//             for (let input of c2.inputs.input) {
+//                 if (input.type == output.type) {
+//                     c2.col = col + 1
+//                     ++nRows
+//                     if (c2.outputs) {
+//                         for (let o of c2.outputs.output) {
+//                             newTypes.push(o)
+//                         }
+//                     }
+//                     break
+//                 }
+//             }
+//         }
+//     }
+//     if (newTypes.length) {
+//         let l = findChildren(newTypes, components, col + 1)
+//         if (l > nRows) nRows = l
+//     }
+//     return nRows
+// }
 var nCols = 0;
 var nRows = 0;
 function parseXml(path) {
     var json = X2J.toJson(fs.readFileSync(path));
-    // console.log(json);
     var jsObj = JSON.parse(json);
-    // console.log(jsObj);
-    var components = jsObj.rte.components.component;
-    console.log(components);
-    for (var _i = 0, components_2 = components; _i < components_2.length; _i++) {
-        var c = components_2[_i];
-        if (!c.inputs && !c.outputs) {
-            c.col = 0;
-        }
-        if (!c.inputs) {
-            if (c.outputs) {
-                c.col = 1;
-                nRows = (findChildren(c.outputs.output, components, c.col));
-            }
-        }
-        if (c.col + 1 > nCols)
-            nCols = c.col + 1;
-    }
     var elements = [];
+    var components = jsObj.rte.components.component;
+    var senders = components.filter(function (c) { return c.outputs; });
+    var receivers = components.filter(function (c) { return c.inputs; });
+    // components.filter(c => c.outputs).forEach(sender =>
+    //     sender.receivers = components.filter(c => c.inputs).filter(receiver => receiver.inputs.forEach((input: any) => {
+    //         sender.outputs.forEach((output: any) => output.type == input.type && receiver !== sender)
+    //     }
+    //     )))
+    console.log(receivers);
+    // senders.forEach(function (sender:any) {
+    //     sender.receivers = receivers.filter(function (receiver:any) {
+    //         receiver.inputs.input.forEach(function (input: any){
+    //             sender.outputs.forEach(function (output: any) {
+    //                 return output.type == input.type && receiver !== sender
+    //             })
+    //         })
+    //     })
+    // })
+    console.log(senders[0].outputs);
+    // senders.forEach(sender => sender.receivers = receivers.filter(receiver => receiver.inputs..forEach((input: any) => {
+    //         sender.outputs.forEach((output: any) => output.type == input.type && receiver !== sender)
+    //     }
+    //     )))
+    // elements[0].data.receivers = components.filter(f => !f.inputs && f.outputs)
+    // TODO: https://stackoverflow.com/questions/12710905/how-do-i-dynamically-assign-properties-to-an-object-in-typescript
+    // components[0].label = 'erik'
+    // console.log(components)
+    // components.filter(f => !f.inputs && !f.outputs).forEach(c => c.col = 0)
+    // console.log(components.filter(f => !f.inputs && !f.outputs));
+    // console.log(components.filter(f => !f.inputs && f.outputs));
     components.forEach(function (component) {
-        component.label = capitalizeFirstLetter(component.name).replace(/_/g, ' ');
-        component.prospect = false;
-        elements.push({
-            data: component
-        });
+        elements.push({ data: component });
     });
-    console.log(elements);
+    // for (let c of components) {
+    //     let col = 0
+    //     // if (!c.inputs && !c.outputs) {
+    //     //     c.col = 0
+    //     // }
+    //     if (!c.inputs) {
+    //         if (c.outputs) {
+    //             col = 1
+    //             nRows = (findChildren(c.outputs.output, components, col))
+    //         }
+    //     }
+    //     if (col + 1 > nCols) nCols = col + 1
+    //     let data = c
+    //     c.label = capitalizeFirstLetter(c.name).replace(/_/g, ' ')
+    //     c.col = col
+    //     c.row = 0
+    //     elements.push({
+    //                 data: c, 
+    //                 // data{'col'}: col,
+    //             })
+    // }
+    // components.forEach(function (component : any) {
+    //     component.label = capitalizeFirstLetter(component.name).replace(/_/g, ' ')
+    //     component.prospect = false
+    // elements.push({
+    //         data: component,
+    //     })
+    // })
+    // console.log('elements', elements)
+    // cy.filter('node[outputs]').forEach(function (sender: any) {
+    //     sender.data('receivers', cy.filter('node[inputs]').filter(function (receiver: any) {
+    //         for (let input of receiver.data('inputs').input) {
+    //             for (let output of sender.data('outputs').output) {
+    //                 return output.type == input.type && receiver !== sender
+    //             }
+    //         }
+    //     }))
+    // })
+    // cy.nodes().classes('default')
     var cy = cytoscape({
         container: document.getElementById('cy'),
         boxSelectionEnabled: false,
@@ -225,18 +266,17 @@ function parseXml(path) {
     });
     cy.ready(function (e) {
         /* Set receivers */
-        cy.filter('node[outputs]').forEach(function (sender) {
-            sender.data('receivers', cy.filter('node[inputs]').filter(function (receiver) {
-                for (var _i = 0, _a = receiver.data('inputs').input; _i < _a.length; _i++) {
-                    var input = _a[_i];
-                    for (var _b = 0, _c = sender.data('outputs').output; _b < _c.length; _b++) {
-                        var output = _c[_b];
-                        return output.type == input.type && receiver !== sender;
-                    }
-                }
-            }));
-        });
-        cy.nodes().classes('default');
+        // cy.filter('node[outputs]').forEach(function (sender: any) {
+        //     sender.data('receivers', cy.filter('node[inputs]').filter(function (receiver: any) {
+        //         for (let input of receiver.data('inputs').input) {
+        //             for (let output of sender.data('outputs').output) {
+        //                 return output.type == input.type && receiver !== sender
+        //             }
+        //         }
+        //     }))
+        // })
+        // cy.nodes().classes('default')
+        console.log(cy.elements());
     });
     function getMatchingType(source, target) {
         var targets = [];
