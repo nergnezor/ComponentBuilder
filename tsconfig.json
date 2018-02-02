@@ -4,12 +4,15 @@
       "noImplicitAny": true,
       "sourceMap": true,
       "outDir": "dist",
+      "allowJs": true,
+      // "declaration": true,
       "baseUrl": ".",
       "paths": {
         "*": ["node_modules/*"]
       }
     },
     "include": [
-      "src/**/*"
-    ]
+      "src/**/*",
+      "typings/*",
+    ],
   }
