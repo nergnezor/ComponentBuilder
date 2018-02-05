@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain } from "electron"
+import { app, BrowserWindow, dialog, Menu } from "electron"
 import * as path from "path"
 import * as url from "url"
 
@@ -6,10 +6,7 @@ let mainWindow: Electron.BrowserWindow
 
 function createWindow() {
   // Create the browser window.
-  mainWindow = new BrowserWindow({
-    height: 600,
-    width: 800,
-  })
+  mainWindow = new BrowserWindow({ show: false, backgroundColor: "#303030" })
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
@@ -17,7 +14,7 @@ function createWindow() {
     protocol: "file:",
     slashes: true,
   }))
-
+  mainWindow.once("ready-to-show", () => { mainWindow.maximize() })
   // Open the DevTools.
   //   mainWindow.webContents.openDevTools();
 
@@ -52,23 +49,28 @@ app.on("activate", () => {
   }
 })
 
+const template = [{
+  label: "File",
+  submenu: [
+    {
+      click: () => {
+        dialog.showOpenDialog({
+          filters: [{
+            extensions: ["xml"],
+            name: "Components XML",
+          }],
+          properties: ["openFile"],
+        },
+          (files) => {
+            if (files) {
+              mainWindow.webContents.send("selected-file", files[0])
+            }
+          })
+      },
+      label: "Open .XML",
+    }],
+}]
+const menu = Menu.buildFromTemplate(template)
+Menu.setApplicationMenu(menu)
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
-// const ipc = require("electron").ipcMain
-// const dialog = require("electron").dialog
-
-ipcMain.on("open-file-dialog", (event: any) => {
-  console.log("open file")
-  dialog.showOpenDialog({
-    filters: [{
-      extensions: ["xml"],
-      name: "Components XML",
-    }],
-    properties: ["openFile"],
-  },
-    (files) => {
-      if (files) {
-        event.sender.send("selected-file", files[0])
-      }
-    })
-})

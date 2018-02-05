@@ -1,7 +1,3 @@
-body {
-    background-color: #303030;
-/*     font-family: roboto; */
-}
 @font-face {
   font-family: 'roboto';
   src: url('roboto-regular.ttf'); /* IE9 Compat Modes */
@@ -19,8 +15,3 @@ h1 {
 p {
     font-size: 20px;
 }
-
-button {
-    color: chocolate
-}
-

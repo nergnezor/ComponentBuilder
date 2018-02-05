@@ -1,19 +1,12 @@
 import * as cytoscape from "cytoscape"
-// import * as edgehandles from "cytoscape-edgehandles"
 import { ipcRenderer } from "electron"
 import { readFileSync } from "fs"
-// import "lodash.debounce"
-// import "lodash.throttle"
 import { log } from "util"
 import { toJson } from "xml2json"
-// const edgehandles: any = require("cytoscape-edgehandles")
-const edgehandles = require("cytoscape-edgehandles")
 const dagre = require("cytoscape-dagre")
+const edgehandles = require("cytoscape-edgehandles")
 dagre(cytoscape)
 edgehandles(cytoscape)
-
-const selectDirBtn = document.getElementById("select-file")
-selectDirBtn.addEventListener("click", (event) => ipcRenderer.send("open-file-dialog"))
 
 ipcRenderer.on("selected-file", (event: any, path: string) => parseXml(path))
 
@@ -23,11 +16,11 @@ function capitalizeFirstLetter(s: string) {
 
 interface INode {
     name: string
-    inputs: object[]
-    outputs: object[]
-    col: number
-    row: number
-    receivers: INode[]
+    inputs: any
+    outputs: any
+    // col: number
+    // row: number
+    receivers: INode[],
 }
 
 function parseXml(path: string) {
@@ -62,7 +55,10 @@ function parseXml(path: string) {
             for (const input of receiver.inputs) {
                 for (const output of sender.outputs) {
                     if (output.type === input.type && receiver !== sender) {
-                        edges.push({ data: { source: sender.id, target: receiver.id } })
+                        edges.push({
+                            classes: "possibleEdge",
+                            data: { source: sender.id, target: receiver.id, type: output.type },
+                        })
                         return
                     }
                 }
@@ -71,7 +67,7 @@ function parseXml(path: string) {
     })
 
     const cy = cytoscape({
-        autoungrabify: true,
+        // autoungrabify: true,
         // autounselectify: true,
         boxSelectionEnabled: false,
         container: document.getElementById("cy"),
@@ -86,6 +82,21 @@ function parseXml(path: string) {
                     "background-color": "#505050",
                     "border-opacity": 0,
                     // 'z-index': 9007199254740992
+                },
+            },
+            {
+                selector: ".possibleEdge",
+                style: {
+                    display: "none",
+                    opacity: 0.1,
+                    events: "no",
+                },
+            },
+            {
+                selector: ".connectedEdge",
+                style: {
+                    "curve-style": "bezier",
+                    "opacity": 1,
                 },
             },
             {
@@ -151,10 +162,10 @@ function parseXml(path: string) {
                     // },
                     // "control-point-weights": [0.1, 0.9],
                     // "curve-style": "unbundled-bezier",
-                    // "curve-style": "bezier",
+                    "curve-style": "bezier",
                     "font-size": 12,
                     "line-style": "solid",
-                    "opacity": 0.1,
+                    // "opacity": 0.1,
                     "target-arrow-color": "#ccc",
                     "target-arrow-shape": "triangle",
                     // 'z-index': 9007199254740992
@@ -197,7 +208,12 @@ function parseXml(path: string) {
             {
                 selector: ".eh-preview",
                 style: {
-                    "border-color": "orange",
+                    "border-color"(ele: any, target, added) {
+                        console.log(ele)
+                        // console.log(target)
+                        // console.log(added)
+                        return "white"
+                    },
                     "curve-style": "bezier",
                     "opacity": 1,
                 },
@@ -226,24 +242,24 @@ function parseXml(path: string) {
         cy.nodes().classes("default")
     })
 
-    function getMatchingType(source: any, target: any) {
-            const targets = []
-            for (const output of source.data("outputs").output) {
-                for (const input of target.data("inputs").input) {
-                    if (output.type === input.type) {
-                        targets.push({ source: output.name, type: output.type.replace("struct ", ""), target: input.name })
-                    }
-                }
-            }
-            return targets
-        }
+    // function getMatchingType(source: any, target: any) {
+    //         const targets = []
+    //         for (const output of source.data("outputs").output) {
+    //             for (const input of target.data("inputs").input) {
+    //                 if (output.type === input.type) {
+    //                     targets.push({ source: output.name, type: output.type.replace("struct ", ""), target: input.name })
+    //                 }
+    //             }
+    //         }
+    //         return targets
+    //     }
     const color = ["hotpink", "orchid", "mediumpurple", "LightSkyBlue", "MediumAquaMarine", "LightSalmon", "Coral"]
     // let color = [hsl(270,60%, 70%)]
     let lastEvent = ""
     cy.on("tapdragout tapdragover ehstart", "node", (evt) => {
         const node = evt.target
         // log("tapped " + node.id())
-        console.log(evt.type, evt.target.id())
+        // console.log(evt.type, evt.target.id())
     })
     // cy.on("ehstart", (evt, sourceNode) => {
     //     const node = evt.target
@@ -252,16 +268,19 @@ function parseXml(path: string) {
     // })
     cy.on("ehshow ehhide ehstart ehcomplete ehstop ehcancel ehpreviewon ehpreviewoff tapdragout",
         (event: cytoscape.EventObject, sourceNode: cytoscape.NodeCollection, targetNode: any, addedEles: any) => {
-            log(event.type)
+            // log(event.type)
             switch (event.type) {
                 case "ehshow":
                     // sourceNode.activate()
-                    console.log(sourceNode.connectedEdges().targets().select())
+                    // console.log(sourceNode.connectedEdges())
+                    sourceNode.select()
+                    sourceNode.outgoers(".possibleEdge").style("display", "element")
                     // sourceNode.data("receivers").classes("prospect")
                     // cy.nodes().filter(".default").style("events", "no")
                     break
 
-                case "ehhide":
+                    case "ehhide":
+                    cy.nodes(":selected").connectedEdges().style("display", "none")
                     cy.nodes(":selected").deselect()
                     // cy.nodes().filter(".prospect").classes("default")
                     // cy.nodes().filter(".default").style("events", "yes")
@@ -290,12 +309,14 @@ function parseXml(path: string) {
                     break
 
                 case "ehpreviewon":
-                    cy.style().selector(".eh-ghost-edge").style({ visibility: "hidden" }).update()
-                    const edgeLabels = getMatchingType(sourceNode, targetNode)
-                    // cy.edges().last().style('target-label', edgeLabels[0]['type'])
-                    cy.edges().last().style({
-    "target-label": edgeLabels[0].type, "line-color": color[(cy.edges().length - 2) % color.length],
-    })
+                    // cy.edges(".possibleEdge").style("display", "none")
+
+                    // cy.style().selector(".eh-ghost-edge").style({ visibility: "hidden" }).update()
+    //                 const edgeLabels = getMatchingType(sourceNode, targetNode)
+    //                 // cy.edges().last().style('target-label', edgeLabels[0]['type'])
+    //                 cy.edges().last().style({
+    // "target-label": edgeLabels[0].type, "line-color": color[(cy.edges().length - 2) % color.length],
+    // })
 
                     break
                 case "ehcomplete":
