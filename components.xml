@@ -6,23 +6,29 @@
     </return_codes>
   </port_mappings>
   
+  <port_definitions>
+    <port_definition name="sampler_port">
+      <operations>
+        <operation name="frame" returns="zfaReturn" parameters="uint16_t tick, zfaAsicSet *asics, uint16_t *frameId, enum zfaFrameType *frameType"/>
+        <operation name="synced_scan" returns="zfaReturn" parameters="enum zfaSyncSwitch *syncSwitch, uint16_t *postDelayMs, uint8_t *programCount, bool *isLast" />
+        <operation name="program_asics" returns="zfaReturn" parameters="zfaAsicSet *asics" />
+        <operation name="program_instr_param" returns="zfaReturn" parameters="uint16_t *instrParamCount, uint8_t *instrParamItems, bool *isLast" />
+        <operation name="program_config" returns="zfaReturn" parameters="enum zfaSyncMode *syncMode, enum zfaSelftestMode *selftestMode, enum zfaAdcMode *adcMode, struct zfaSampler_AsicPartitions *partitions" />
+      </operations>
+    </port_definition>
+  </port_definitions>
+  
   <components generate_ports="true">
     <component name="core_sampler">
-      <outputs>
-        <output name="reference_signals" i_write="true" type="struct zfaSignals"/>
-      </outputs>
       <inputs>
-        <input name="object_detector_mode" i_read="true" queued="false" thread_safe="true" type="enum zfaObjectDetectorMode"/>
-        <input name="calibration_signals" i_read="true" queued="false" thread_safe="true" type="struct zfaSignals"/>
+        <input name="core_calibration" i_read="true" queued="false" type="struct zfaCoreCalibration"/>
       </inputs>
-      <runnables> 
-        <runnable name="frame" function="zfaCoreSampler_Frame" returns="zfaReturn" parameters="uint16_t tick,zfaAsicSet *asics, uint16_t *frameId, enum zfaFrameType *frameType"/>
-        <runnable name="synced_scan" function="zfaCoreSampler_SyncedScan" returns="zfaReturn" parameters="enum zfaSyncSwitch *syncSwitch, uint16_t *postDelayMs, uint8_t *programCount, bool *isLast"/>
-        <runnable name="program_asics" function="zfaCoreSampler_ProgramAsics" returns="zfaReturn" parameters="zfaAsicSet *asics"/>
-        <runnable name="program_instr_param" function="zfaCoreSampler_ProgramInstrParam" returns="zfaReturn" parameters="uint16_t *instrParamCount, uint8_t *instrParamItems, bool *isLast"/>
-        <runnable name="program_config" function="zfaCoreSampler_ProgramConfig" returns="zfaReturn" parameters="enum zfaSyncMode *syncMode, enum zfaSelftestMode *selftestMode, enum zfaAdcMode *adcMode, uint8_t *instrSize, uint8_t *paramSize, uint8_t *resultSize"/>
+      <runnables>
         <runnable name="init" function="zfaCoreSampler_Init"/>
       </runnables>
+      <server_ports>
+        <server_port name="sampler_port" port_definition="sampler_port"/>
+      </server_ports>
       <parameters>
         <parameter name="prescaler" type="uint16_t"/>
       </parameters>
@@ -33,17 +39,15 @@
 
     <component name="asic_adc_sampler">
       <runnables>
-        <runnable name="frame" function="zfaAsicAdcSampler_Frame" returns="zfaReturn" parameters="uint16_t tick,zfaAsicSet *asics, uint16_t *frameId, enum zfaFrameType *frameType"/>
-        <runnable name="synced_scan" function="zfaAsicAdcSampler_SyncedScan" returns="zfaReturn" parameters="enum zfaSyncSwitch *syncSwitch, uint16_t *postDelayMs, uint8_t *programCount, bool *isLast"/>
-        <runnable name="program_asics" function="zfaAsicAdcSampler_ProgramAsics" returns="zfaReturn" parameters="zfaAsicSet *asics"/>
-        <runnable name="program_instr_param" function="zfaAsicAdcSampler_ProgramInstrParam" returns="zfaReturn" parameters="uint16_t *instrParamCount, uint8_t *instrParamItems, bool *isLast"/>
-        <runnable name="program_config" function="zfaAsicAdcSampler_ProgramConfig" returns="zfaReturn" parameters="enum zfaSyncMode *syncMode, enum zfaSelftestMode *selftestMode, enum zfaAdcMode *adcMode, uint8_t *instrSize, uint8_t *paramSize, uint8_t *resultSize"/>
         <runnable name="init" function="zfaAsicAdcSampler_Init"/>
       </runnables>
       <parameters>
         <parameter name="prescaler" type="uint16_t"/>
         <parameter name="monitored_asic_set" type="uint16_t"/>
       </parameters>
+      <server_ports>
+        <server_port name="sampler_port" port_definition="sampler_port"/>
+      </server_ports>
       <per_instance_memories>
         <per_instance_memory name="state" type="struct zfaAsicAdcSampler_State"/>
       </per_instance_memories>
@@ -51,27 +55,40 @@
 	
     <component name="asic_selftest_sampler">
       <runnables>
-        <runnable name="frame" function="zfaAsicSelftestSampler_Frame" returns="zfaReturn" parameters="uint16_t tick,zfaAsicSet *asics, uint16_t *frameId, enum zfaFrameType *frameType"/>
-        <runnable name="synced_scan" function="zfaAsicSelftestSampler_SyncedScan" returns="zfaReturn" parameters="enum zfaSyncSwitch *syncSwitch, uint16_t *postDelayMs, uint8_t *programCount, bool *isLast"/>
-        <runnable name="program_asics" function="zfaAsicSelftestSampler_ProgramAsics" returns="zfaReturn" parameters="zfaAsicSet *asics"/>
-        <runnable name="program_instr_param" function="zfaAsicSelftestSampler_ProgramInstrParam" returns="zfaReturn" parameters="uint16_t *instrParamCount, uint8_t *instrParamItems, bool *isLast"/>
-        <runnable name="program_config" function="zfaAsicSelftestSampler_ProgramConfig" returns="zfaReturn" parameters="enum zfaSyncMode *syncMode, enum zfaSelftestMode *selftestMode, enum zfaAdcMode *adcMode, uint8_t *instrSize, uint8_t *paramSize, uint8_t *resultSize"/>
         <runnable name="init" function="zfaAsicSelftestSampler_Init"/>
       </runnables>
       <parameters>
         <parameter name="prescaler" type="uint16_t"/>
         <parameter name="comp_count" type="struct zfaAsicSelftest_CompCount"/>
       </parameters>
+      <server_ports>
+        <server_port name="sampler_port" port_definition="sampler_port"/>
+      </server_ports>
       <per_instance_memories>
         <per_instance_memory name="state" type="struct zfaAsicSelftestSampler_State"/>
       </per_instance_memories>
     </component>
 
+    <component name="air_sampler_nn1003">
+      <runnables>
+        <runnable name="init" function="zfaAirSamplerNn1003_Init"/>
+      </runnables>
+      <parameters>
+        <parameter name="prescaler" type="uint16_t"/>
+        <parameter name="calibration" type="struct zfaAirSamplerNn1003_Calibration"/>
+        <parameter name="geometry" type="struct zfaAirGeometry"/>
+      </parameters>
+      <server_ports>
+        <server_port name="sampler_port" port_definition="sampler_port"/>
+      </server_ports>
+      <per_instance_memories>
+        <per_instance_memory name="state" type="struct zfaAirSamplerNn1003_State"/>
+      </per_instance_memories>
+    </component>
+
     <component name="scanner">
       <outputs>
-        <output name="result_0" i_write="false" type="struct zfaScanResult" exclude_port="true"/>
-        <output name="result_1" i_write="false" type="struct zfaScanResult" exclude_port="true"/>
-        <output name="result_2" i_write="false" type="struct zfaScanResult" exclude_port="true"/>
+        <output name="result" i_write="false" type="struct zfaScanResult" array_size="4" queued="true"/>
       </outputs>
       <runnables>
         <runnable name="init" function="zfaScanner_Init"/>
@@ -85,6 +102,9 @@
       <parameters>
         <parameter name="controlled_asics" type="uint16_t"/>  
       </parameters>
+      <client_ports>
+        <client_port name="sampler_port" port_definition="sampler_port" array_size="4"/>
+      </client_ports>
       <per_instance_memories>
         <per_instance_memory name="state" type="struct zfaScanner_State"/>
       </per_instance_memories>
@@ -92,7 +112,7 @@
 
     <component name="fixed_map_signal_decoder">
       <inputs>
-        <input name="result" i_read="false" queued="true" queue_length="1" thread_safe="false" type="struct zfaScanResult"/>
+        <input name="result" i_read="false" queued="true"  type="struct zfaScanResult"/>
       </inputs>
       <outputs>
         <output name="signals" i_write="true" type="struct zfaSignals"/>
@@ -109,33 +129,62 @@
       </per_instance_memories>
     </component>
 
-    <component name="core_mediator">
+    <component name="air_decoder_nn1003">
       <inputs>
-        <input name="signals_in" i_read="true" queued="false" thread_safe="true" type="struct zfaSignals"/>
+        <input name="result" i_read="false" queued="true" type="struct zfaScanResult"/>
       </inputs>
       <outputs>
-        <output name="signals_out" i_write="true" memshare_group="1" type="struct zfaSignals"/>
-        <output name="calibration_signals" i_write="true" type="struct zfaSignals"/>
+        <output name="signals" i_write="true" type="struct zfaSignals"/>
+      </outputs>
+      <runnables>
+        <runnable name="init" function="zfaAirDecoderNn1003_Init"/>
+        <runnable name="run" function="zfaAirDecoderNn1003_Run"/>
+      </runnables>
+      <parameters>
+        <parameter name="hotspot_layout" type="struct zfaAirHotspotLayout"/>
+        <parameter name="geometry" type="struct zfaAirGeometry"/>
+      </parameters>
+      <per_instance_memories>
+        <per_instance_memory name="state" type="struct zfaAirDecoderNn1003_State"/>
+      </per_instance_memories>
+    </component>
+
+    <component name="core_mediator">
+      <inputs>
+        <input name="signals_in" i_read="true" queued="false" type="struct zfaSignals"/>
+        <input name="detector_mode" i_read="true" queued="false" type="enum zfaDetectorMode"/>
+      </inputs>
+      <outputs>
+        <output name="signals_out" i_write="true"  type="struct zfaSignals"/>
+        <output name="core_calibration" i_write="true" type="struct zfaCoreCalibration"/>
       </outputs>
       <runnables>
         <runnable name="run" function="zfaCoreMediator_Run"/>
+        <runnable name="init" function="zfaCoreMediator_Init"/>
       </runnables>
+      <parameters>
+        <parameter name="config" type="struct zfaCoreMediator_Config"/>
+      </parameters>
+      <per_instance_memories>
+        <per_instance_memory name="state" type="struct zfaCoreMediator_State"/>
+      </per_instance_memories>
     </component>
-
+    
     <component name="core_detector">
       <inputs>
-        <input name="signals" i_read="true" queued="false" thread_safe="false" memshare_group="1" type="struct zfaSignals"/>
-        <input name="reference_signals" i_read="true" queued="false" thread_safe="true" type="struct zfaSignals"/>
+        <input name="signals" i_read="true" queued="false" type="struct zfaSignals"/>
       </inputs>
       <outputs>
         <output name="tracked_objects" i_write="true" type="struct zfaTrackedObjects"/>
-        <output name="object_detector_mode" i_write="true" type="enum zfaObjectDetectorMode"/>
+        <output name="detector_mode" i_write="true" type="enum zfaDetectorMode"/>
       </outputs>
       <runnables>
         <runnable name="init" function="zfaCoreDetector_Init"/>
         <runnable name="run" function="zfaCoreDetector_Run"/>
-        <runnable name="on_ref_signals" function="zfaCoreDetector_OnReferenceUpdated"/>
       </runnables>
+      <parameters>
+        <parameter name="config" type="struct zfaCoreDetector_Config"/>
+      </parameters>
       <per_instance_memories>
         <per_instance_memory name="state" type="struct zfaCoreDetector_State"/>
       </per_instance_memories>
@@ -143,7 +192,7 @@
     
     <component name="asic_adc_decoder">
       <inputs>
-        <input name="result" i_read="false" queued="true" queue_length="1" thread_safe="false" type="struct zfaScanResult"/>
+        <input name="result" i_read="false" queued="true"  type="struct zfaScanResult"/>
       </inputs>
       <outputs>
         <output name="temperature" i_write="true" type="uint32_t" exclude_port="true"/>
@@ -157,7 +206,7 @@
     
     <component name="asic_selftest_decoder">
       <inputs>
-        <input name="result" i_read="false" queued="true" queue_length="1" thread_safe="false" type="struct zfaScanResult"/>
+        <input name="result" i_read="false" queued="true"  type="struct zfaScanResult"/>
       </inputs>
       <outputs>
         <output name="faults" i_write="true" type="struct zfaAsicSelftestDecoder_Faults"/>
@@ -176,7 +225,7 @@
     
     <component name="gesture_detector">
       <inputs>
-        <input name="tracked_objects" i_read="true" queued="false" thread_safe="false"  type="struct zfaTrackedObjects"/>
+        <input name="tracked_objects" i_read="true" queued="false"   type="struct zfaTrackedObjects"/>
       </inputs>
       <outputs>
         <output name="gestures" i_write="true" type="struct zfaGestures"/>
@@ -185,93 +234,103 @@
         <runnable name="init" function="zfaGestureDetector_Init"/>
         <runnable name="run" function="zfaGestureDetector_Run"/>
       </runnables>
+      <parameters>
+        <parameter name="config" type="struct zfaGestureDetector_Config"/>
+        <parameter name="screen_config" type="struct zfaScreen_Config"/>
+      </parameters>
       <per_instance_memories>
         <per_instance_memory name="state" type="struct zfaGestureDetector_State"/>
       </per_instance_memories>
     </component>
     
-    <component name="fixed_touchscreen_sampler">
+    <component name="fixed_sampler">
       <runnables>
-        <runnable name="frame" function="zfaFixedTouchscreenSampler_Frame" returns="zfaReturn" parameters="uint16_t tick,zfaAsicSet *asics, uint16_t *frameId, enum zfaFrameType *frameType"/>
-        <runnable name="synced_scan" function="zfaFixedTouchscreenSampler_SyncedScan" returns="zfaReturn" parameters="enum zfaSyncSwitch *syncSwitch, uint16_t *postDelayMs, uint8_t *programCount, bool *isLast"/>
-        <runnable name="program_asics" function="zfaFixedTouchscreenSampler_ProgramAsics" returns="zfaReturn" parameters="zfaAsicSet *asics"/>
-        <runnable name="program_instr_param" function="zfaFixedTouchscreenSampler_ProgramInstrParam" returns="zfaReturn" parameters="uint16_t *instrParamCount, uint8_t *instrParamItems, bool *isLast"/>
-        <runnable name="program_config" function="zfaFixedTouchscreenSampler_ProgramConfig" returns="zfaReturn" parameters="enum zfaSyncMode *syncMode, enum zfaSelftestMode *selftestMode, enum zfaAdcMode *adcMode, uint8_t *instrSize, uint8_t *paramSize, uint8_t *resultSize"/>
-        <runnable name="init" function="zfaFixedTouchscreenSampler_Init"/>
+        <runnable name="init" function="zfaFixedSampler_Init"/>
       </runnables>
       <parameters>
         <parameter name="prescaler" type="uint16_t"/>
         <parameter name="scan_frame_request" type="struct zfaScanFrameRequest"/>
       </parameters>
+      <server_ports>
+        <server_port name="sampler_port" port_definition="sampler_port"/>
+      </server_ports>
       <per_instance_memories>
-        <per_instance_memory name="state" type="struct zfaFixedTouchscreenSampler_State"/>
+        <per_instance_memory name="state" type="struct zfaFixedSampler_State"/>
       </per_instance_memories>
     </component>
     
-    <component name="asic_syncswitchtest_sampler">
+    <component name="asic_synctest_sampler">
       <runnables>
-        <runnable name="frame" function="zfaAsicSyncswitchtestSampler_Frame" returns="zfaReturn" parameters="uint16_t tick,zfaAsicSet *asics, uint16_t *frameId, enum zfaFrameType *frameType"/>
-        <runnable name="synced_scan" function="zfaAsicSyncswitchtestSampler_SyncedScan" returns="zfaReturn" parameters="enum zfaSyncSwitch *syncSwitch, uint16_t *postDelayMs, uint8_t *programCount, bool *isLast"/>
-        <runnable name="program_asics" function="zfaAsicSyncswitchtestSampler_ProgramAsics" returns="zfaReturn" parameters="zfaAsicSet *asics"/>
-        <runnable name="program_instr_param" function="zfaAsicSyncswitchtestSampler_ProgramInstrParam" returns="zfaReturn" parameters="uint16_t *instrParamCount, uint8_t *instrParamItems, bool *isLast"/>
-        <runnable name="program_config" function="zfaAsicSyncswitchtestSampler_ProgramConfig" returns="zfaReturn" parameters="enum zfaSyncMode *syncMode, enum zfaSelftestMode *selftestMode, enum zfaAdcMode *adcMode, uint8_t *instrSize, uint8_t *paramSize, uint8_t *resultSize"/>
-        <runnable name="init" function="zfaAsicSyncswitchtestSampler_Init"/>
+        <runnable name="init" function="zfaAsicSynctestSampler_Init"/>
       </runnables>
       <parameters>
         <parameter name="prescaler" type="uint16_t"/>
       </parameters>
+      <server_ports>
+        <server_port name="sampler_port" port_definition="sampler_port"/>
+      </server_ports>
       <per_instance_memories>
-        <per_instance_memory name="state" type="struct zfaAsicSyncswitchtestSampler_State"/>
+        <per_instance_memory name="state" type="struct zfaAsicSynctestSampler_State"/>
       </per_instance_memories>
     </component>
     
-    <component name="offset_filter">
+    <component name="air_edge_filter">
       <inputs>
-        <input name="signals_in" i_read="true" queued="false" thread_safe="true" type="struct zfaSignals"/>
+        <input name="signals" i_read="true" queued="false" type="struct zfaSignals"/>
       </inputs>
       <outputs>
-        <output name="signals_out" i_write="true" memshare_group="1" type="struct zfaSignals"/>
+        <output name="sensor_noise" i_write="true" type="struct zfaAirEdgeFilter_SensorNoise_Array"/>
+        <output name="sensor_checks" i_write="true" type="struct zfaAirEdgeFilter_SensorChecks_Array"/>
+        <output name="edges" i_write="true" type="struct zfaAirEdges"/>
       </outputs>
       <runnables>
-        <runnable name="init" function="zfaOffsetFilter_Init"/>
-        <runnable name="run" function="zfaOffsetFilter_Run"/>
-      </runnables>
-      <per_instance_memories>
-        <per_instance_memory name="state" type="struct zfaOffsetFilter_State"/>
-      </per_instance_memories>
-    </component>
-    
-    <component name="scale_filter">
-      <inputs>
-        <input name="signals_in" i_read="true" queued="false" thread_safe="false"  memshare_group="1" type="struct zfaSignals"/>
-      </inputs>
-      <outputs>
-        <output name="signals_out" i_write="true"  memshare_group="1" type="struct zfaSignals"/>
-      </outputs>
-      <runnables>
-        <runnable name="run" function="zfaScaleFilter_Run"/>
+        <runnable name="init" function="zfaAirEdgeFilter_Init"/>
+        <runnable name="run" function="zfaAirEdgeFilter_Run"/>
       </runnables>
       <parameters>
-        <parameter name="scale_q8" type="struct zfaSignals_Signal_Array"/>
+        <parameter name="config" type="struct zfaAirEdgeFilter_Config"/>
+        <parameter name="geometry" type="struct zfaAirGeometry"/>
+        <parameter name="hotspot_layout" type="struct zfaAirHotspotLayout"/>
       </parameters>
+      <per_instance_memories>
+        <per_instance_memory name="state" type="struct zfaAirEdgeFilter_State"/>
+      </per_instance_memories>
     </component>
-  
+	
     <component name="air_hand_detector">
       <inputs>
-        <input name="signals" i_read="true" queued="false" thread_safe="false"  memshare_group="1" type="struct zfaSignals"/>
+        <input name="edges" i_read="true" queued="false"    type="struct zfaAirEdges"/>
+      </inputs>
+      <outputs>
+        <output name="detected_objects" i_write="true" type="struct zfaDetectedObjects"/>
+      </outputs>
+      <runnables>
+        <runnable name="run" function="zfaAirHandDetector_Run"/>
+      </runnables>
+      <parameters>
+        <parameter name="config" type="struct zfaAirHandDetector_Config"/>
+        <parameter name="screen_config" type="struct zfaScreen_Config"/>
+        <parameter name="transform" type="struct zfaLocationTransformRadial"/>
+      </parameters>
+    </component>
+	
+    <component name="mut_closest_tracker">
+      <inputs>
+        <input name="detected_objects" i_read="true" queued="false"    type="struct zfaDetectedObjects"/>
       </inputs>
       <outputs>
         <output name="tracked_objects" i_write="true" type="struct zfaTrackedObjects"/>
       </outputs>
       <runnables>
-        <runnable name="init" function="zfaAirHandDetector_Init"/>
-        <runnable name="run" function="zfaAirHandDetector_Run"/>
+        <runnable name="init" function="zfaMutClosestTracker_Init"/>
+        <runnable name="run" function="zfaMutClosestTracker_Run"/>
       </runnables>
       <parameters>
-        <parameter name="hotspot_layout" type="struct zfaAirHotspotLayout"/>
+        <parameter name="config" type="struct zfaMutClosestTracker_Config"/>
+        <parameter name="screen_config" type="struct zfaScreen_Config"/>
       </parameters>
       <per_instance_memories>
-        <per_instance_memory name="state" type="struct zfaAirHandDetector_State"/>
+        <per_instance_memory name="state" type="struct zfaMutClosestTracker_State"/>
       </per_instance_memories>
     </component>
   </components>
