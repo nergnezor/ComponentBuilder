@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, Menu } from "electron"
+import { app, BrowserWindow, Menu } from "electron"
 import * as path from "path"
 import * as url from "url"
 
@@ -49,27 +49,35 @@ app.on("activate", () => {
   }
 })
 
-const template = [{
-  label: "File",
-  submenu: [
-    {
-      click: () => {
-        dialog.showOpenDialog({
-          filters: [{
-            extensions: ["xml"],
-            name: "Components XML",
-          }],
-          properties: ["openFile"],
+const template = [
+  {
+    label: "File",
+    submenu: [
+      {
+        accelerator: "O",
+        click: () => {
+          mainWindow.webContents.send("selected-file")
         },
-          (files) => {
-            if (files) {
-              mainWindow.webContents.send("selected-file", files[0])
-            }
-          })
+        label: "Open .XML",
       },
-      label: "Open .XML",
-    }],
-}]
+      {
+        accelerator: "R",
+        click: () => {
+          mainWindow.reload()
+        },
+        label: "Reload",
+      }],
+  }, {
+    label: "View",
+    submenu: [
+      {
+        accelerator: "V",
+        click: () => {
+          mainWindow.webContents.send("switch-view")
+        },
+        label: "Switch",
+      }],
+  }]
 const menu = Menu.buildFromTemplate(template)
 Menu.setApplicationMenu(menu)
 // In this file you can include the rest of your app"s specific main process

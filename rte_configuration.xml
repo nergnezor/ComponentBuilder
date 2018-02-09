@@ -1,0 +1,82 @@
+<rte xmlns="autosar.xsd">
+  <connections>
+    <connection output="scanner:result_0" input="fixed_map_signal_decoder:result" queue_length="1"/>
+    <connection output="scanner:result_1" input="asic_adc_decoder:result" queue_length="1"/>
+    <connection output="scanner:result_2" input="asic_selftest_decoder:result"  queue_length="1"/>
+    <connection output="fixed_map_signal_decoder:signals" input="core_mediator:signals_in" thread_safe="true"/>
+    <connection output="core_mediator:signals_out" input="core_detector:signals"/>
+    <connection output="core_mediator:calibration_signals" input="core_sampler:calibration_signals"/>
+    <connection output="core_detector:object_detector_mode" input="core_sampler:object_detector_mode"/>
+    <connection output="core_sampler:reference_signals" input="core_detector:reference_signals"/>
+    <connection output="core_detector:tracked_objects" input="gesture_detector:tracked_objects"/>
+  </connections>
+
+  <runtime>
+    <ecus>
+      <ecu name="a1">
+        <components>
+          <component component="asic_adc_sampler" instance_id="0"/>
+          <component component="asic_selftest_sampler" instance_id="0"/>
+          <component component="core_sampler" instance_id="0"/>
+          <component component="scanner" instance_id="0"/>
+          <component component="core_detector" instance_id="0"/>
+          <component component="core_mediator" instance_id="0"/>
+          <component component="fixed_map_signal_decoder" instance_id="0"/>
+          <component component="asic_selftest_decoder" instance_id="0"/>
+          <component component="asic_adc_decoder" instance_id="0"/>
+          <component component="gesture_detector" instance_id="0"/>
+        </components>
+        <tasks>
+          <task name="scanner" priority="4" stack_size="3200">
+            <inits>
+              <init runnable="asic_adc_sampler:init" />
+              <init runnable="core_sampler:init" />
+              <init runnable="asic_selftest_sampler:init" />
+              <init runnable="scanner:init" />
+            </inits>
+            <events>
+              <timed_events>
+                <timed_event name="health_check" period_ms="1000" runnable="scanner:health_check"/>
+                <timed_event name="on_tick" period_ms="10" runnable="scanner:on_tick"/>
+              </timed_events>
+              <triggered_events>
+                <triggered_event name="done_asics" custom_trigger_func="done_asics_trigger" runnable="scanner:read_slot"/>
+                <triggered_event name="core_sampler_on_calib_signals" input="core_sampler:calibration_signals" runnable="scanner:create_frame_schedule"/> 
+              </triggered_events>
+            </events>
+          </task>
+          
+          <task name="decoder" priority="3" stack_size="800">
+            <inits>
+              <init runnable="fixed_map_signal_decoder:init" />
+            </inits>
+            <events>
+              <triggered_events>
+                <triggered_event name="fixed_decoder_on_result" input="fixed_map_signal_decoder:result" runnable="fixed_map_signal_decoder:run"/>
+                <triggered_event name="asic_adc_decoder_on_result" input="asic_adc_decoder:result" runnable="asic_adc_decoder:run"/>
+                <triggered_event name="asic_selftest_decoder_on_result" input="asic_selftest_decoder:result" runnable="asic_selftest_decoder:run"/>
+              </triggered_events>
+            </events>
+          </task>
+
+          <task name="postprocess" priority="2" stack_size="1000">
+            <inits>     
+              <init runnable="asic_selftest_decoder:init" />
+              <init runnable="core_detector:init" />
+              <init runnable="gesture_detector:init" />
+            </inits>
+            <events>
+              <triggered_events>
+                <triggered_event name="asic_selftest_decoder_on_result" input="asic_selftest_decoder:result" runnable="asic_selftest_decoder:run"/>
+                <triggered_event name="core_mediator_on_signals" input="core_mediator:signals_in" runnable="core_mediator:run"/>
+                <triggered_event name="core_detector_on_signals" input="core_detector:signals" runnable="core_detector:run"/>
+                <triggered_event name="core_detector_on_ref_signals" input="core_detector:reference_signals" runnable="core_detector:on_ref_signals"/>
+                <triggered_event name="gesture_detector_on_objects" input="gesture_detector:tracked_objects" runnable="gesture_detector:run"/>
+              </triggered_events>
+            </events>
+          </task>
+        </tasks>
+      </ecu>
+    </ecus>
+  </runtime>
+</rte>
