@@ -1,0 +1,561 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="autosar.xsd"
+	xmlns="autosar.xsd"
+	elementFormDefault="qualified">
+    <xs:element name="rte" type="RteType"/>
+
+    <xs:complexType name="RteType">
+        <xs:all>
+            <xs:element name="port_mappings" type="PortMappingsType" minOccurs="0"/>
+            <xs:element name="port_definitions" type="PortDefinitionsType" minOccurs="0" />
+            <xs:element name="components" type="ComponentsType" minOccurs="0" />
+            <xs:element name="connections" type="ConnectionsType" minOccurs="0"/>
+            <xs:element name="runtime" type="RuntimeType" minOccurs="0" />
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="PortMappingsType">
+        <xs:annotation>
+            <xs:documentation>The port mappings describes how the ports should be generated. A scheme can be specified so that the generated function signatures matched the SW-Cs signatures.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="return_codes" minOccurs="0" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation>Contains return code mappings between the built-in rte_status code and the SW-C error codes. At a minimum, the following conversions should exist: rte_status_success, rte_status_generic_error, rte_status_timeout</xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="return_code" minOccurs="0" maxOccurs="unbounded">
+                            <xs:complexType>
+                                <xs:annotation>
+                                    <xs:documentation>A return code value mapping.</xs:documentation>
+                                </xs:annotation>
+                                <xs:attribute name="rte_type" type="xs:string" use="required">
+                                    <xs:annotation>
+                                        <xs:documentation>The built-in rte status code to translate.</xs:documentation>
+                                    </xs:annotation>
+                                </xs:attribute>
+                                <xs:attribute name="type" type="xs:string" use="required">
+                                    <xs:annotation>
+                                        <xs:documentation>The native status code to translate into</xs:documentation>
+                                    </xs:annotation>
+                                </xs:attribute>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="signature" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The signature of the port function to generate. Supports the tokens [ns], [comp], [calltype] and [port].</xs:documentation>
+                <xs:documentation>ns is the namespace, comp is the component name, calltype is for example i_write, read etc, and port is the name of the port.</xs:documentation>
+                <xs:documentation>Using an uppercase letter like [Ns] means name is converted from snake_case to camelCase. The string also supports underscores.</xs:documentation>
+                <xs:documentation>Example: "[ns][Comp]_[Calltype]_[Port]" would generate names like "zfaScanner_IWriteRef_Signals".</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="instance_type" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>Type of the instance that is the first argument to all functions. Usually some derivate of void*.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="return_type" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The return type from the functions. The return codes should be of this type.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="PortDefinitionsType">
+        <xs:annotation>
+            <xs:documentation>A collection of all port definitions.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="port_definition" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation>A port definition describes a set of operations that can be called via a client port. They are referenced from the components.</xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="operations">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="operation" minOccurs="1" maxOccurs="unbounded">
+                                        <xs:complexType>
+                                            <xs:annotation>
+                                                <xs:documentation>An operation corresponds to a server function that can be called by a client port.</xs:documentation>
+                                            </xs:annotation>
+                                            <xs:attribute name="name" type="xs:string" use="required">
+                                                <xs:annotation>
+                                                    <xs:documentation>The name of the operation</xs:documentation>
+                                                </xs:annotation>
+                                            </xs:attribute>
+                                            <xs:attribute name="returns" type="xs:string" use="required">
+                                                <xs:annotation>
+                                                    <xs:documentation>Specifies the return type.</xs:documentation>
+                                                </xs:annotation>
+                                            </xs:attribute>
+                                            <xs:attribute name="parameters" type="xs:string" use="required">
+                                                <xs:annotation>
+                                                    <xs:documentation>Specifeis the parameter list.</xs:documentation>
+                                                </xs:annotation>
+                                            </xs:attribute>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the port definition, to be referenced from client ports.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ComponentsType">
+        <xs:sequence>
+            <xs:element name="component" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>A software component (SW-C) that defines inputs, outputs, and runnables.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="outputs" type="OutputsType" minOccurs="0"/>
+                        <xs:element name="inputs" type="InputsType" minOccurs="0"/>
+                        <xs:element name="client_ports" type="ClientPortsType" minOccurs="0"/>
+                        <xs:element name="server_ports" type="ServerPortsType" minOccurs="0"/>
+                        <xs:element name="runnables" type="RunnablesType" minOccurs="0"/>
+                        <xs:element name="parameters" type="ParametersType" minOccurs="0"/>
+                        <xs:element name="per_instance_memories" type="PerInstanceMemoriesType" minOccurs="0"/>
+                    </xs:all>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the software component. For port generation, should comply to the SW-C output name in snake_case.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="generate_ports" type="xs:boolean">
+            <xs:annotation>
+                <xs:documentation>If true, generates port according to the port mapping element.</xs:documentation>
+                <xs:documentation>Even if ports are not generated, functions for read and writing inputs and outputs will still be generated, and can be used explicitly.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="OutputsType">
+        <xs:sequence>
+            <xs:element name="output" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>An output from the SW-C.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the output. For port generation, should comply to the SW-C output name in snake_case.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="type" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The C type of the output. The type must be found in one of the include files specified during generation.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="i_write" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:documentation>If true, an implicit write call will be generated. Doubles the memory usage as a cached copy of the output is needed.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="array_size" type="xs:positiveInteger">
+                        <xs:annotation>
+                            <xs:documentation>Specifies the number of ports if the port is a port-array</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="queued" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:documentation>Specifies if the port uses queue semantics.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="exclude_port" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:documentation>If generate_ports is true, this marks and exception for this output. Useful if the port needs some extra non-standard parameters.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="InputsType">
+        <xs:sequence>
+            <xs:element name="input" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the input. For port generation, should comply to the SW-C input name in snake_case.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="type" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The C type of the input. The type must be found in one of the include files specified during generation.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="i_read" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:documentation>If true, an implicit read call will be generated. Doubles the memory usage as a cached copy of the input is needed.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="queued" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:documentation>If true, the input uses queue semantics.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="array_size" type="xs:positiveInteger">
+                        <xs:annotation>
+                            <xs:documentation>Specifies the number of ports if the port is a port-array</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="exclude_port" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:documentation>If generate_ports is true, this marks and exception for this input. Useful if the port needs some extra non-standard parameters.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ClientPortsType">
+        <xs:sequence>
+            <xs:element name="client_port" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the port instance, to be referenced by connections.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="port_definition" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>A reference to a port definition that identifies the function signature. For port generation, the operation names will be used to format the names.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="array_size" type="xs:positiveInteger">
+                        <xs:annotation>
+                            <xs:documentation>Specifies the number of ports if the port is a port-array</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="exclude_port" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:documentation>If generate_ports is true, this marks and exception for this port.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ServerPortsType">
+        <xs:sequence>
+            <xs:element name="server_port" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the port instance, to be referenced by connections.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="port_definition" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>A reference to a port definition that identifies the function signature</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ConnectionsType">
+        <xs:sequence>
+            <xs:element name="connection" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>A connection between and output and an input.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="output" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The output of the connection. The name is specified as component:output:index, where index only is used if the output is a port array. Output may be a client port.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="input" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The input of the connection. The name is specified as component:input:index, where index only is used if the input is a port array. Input may be a server port.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="queue_length" type="xs:positiveInteger">
+                        <xs:annotation>
+                            <xs:documentation>Number of elements the queue can hold. Required if queue is true.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="user_defined_cached_output_holder" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>If defined, does not allocate memory for the cahced output but uses an extern field defined by the user. Usable for sharing memory between ports to reduce total memory footprint.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="user_defined_input_holder" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>If defined, does not allocate memory for the input but uses an extern field defined by the user. Usable for sharing memory between ports to reduce total memory footprint.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="user_defined_cached_input_holder" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>If defined, does not allocate memory for the cahced input but uses an extern field defined by the user. Usable for sharing memory between ports to reduce total memory footprint.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="thread_safe" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:documentation>If true, means the connected output and input can be written/read from different threads.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="RunnablesType">
+        <xs:sequence>
+            <xs:element name="runnable" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>A runnable function. Normally has the signature void myRunnable(void *instance);</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the runnable.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="function" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The corresponding C function to call.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ParametersType">
+        <xs:sequence>
+            <xs:element name="parameter" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>A parameter getter.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the parameter.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="type" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The type of the parameter. Will always be const and passed by reference, if not a basic type.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="exclude_port" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:documentation>If generate_ports is true, this marks and exception for this parameter. Useful if the port needs some extra non-standard parameters.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="PerInstanceMemoriesType">
+        <xs:sequence>
+            <xs:element name="per_instance_memory" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>A PIM getter.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the PIM.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="type" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The type of the PIM. Will always be passed by reference, if not a basic type.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="exclude_port" type="xs:boolean">
+                        <xs:annotation>
+                            <xs:documentation>If generate_ports is true, this marks and exception for this PIM. Useful if the port needs some extra non-standard parameters.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="RuntimeType">
+        <xs:sequence>
+            <xs:element name="ecus" type="EcusType"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="EcusType">
+        <xs:sequence>
+            <xs:element name="ecu" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>An ecu definition. Currently only supports one ECU.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="components" type="ComponentInstancesType" minOccurs="0" />
+                        <xs:element name="tasks" type="TasksType" minOccurs="0" />
+                    </xs:sequence>
+                    <xs:attribute name="name" type="xs:string"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ComponentInstancesType">
+        <xs:sequence>
+            <xs:element name="component" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>A component instance that exists on this ECU.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="component" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>The name of the component. Must exist in the components element.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="instance_id" type="xs:integer">
+                        <xs:annotation>
+                            <xs:documentation>An arbitary ID for the component. This ID is only used when calling into user code to fetch the instance pointer, and is there to support multi-instance components and contexts.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="TasksType">
+        <xs:sequence>
+            <xs:element name="task" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>A task that runs on the ECU. Exactly how tasks are implemented depends on the OS used.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="inits" type="InitsType" minOccurs="0" />
+                        <xs:element name="events" type="EventsType" minOccurs="0"/>
+                    </xs:all>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>Name of the task, for identification purposes.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="stack_size" type="xs:positiveInteger" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The stack size in bytes.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="priority" type="xs:positiveInteger" use="required">
+                        <xs:annotation>
+                            <xs:documentation>A priorty integer. The interpretation depends on the OS.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="InitsType">
+        <xs:sequence>
+            <xs:element name="init" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>Init functions that should be called during the startup of this task.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="runnable" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The runnable to call. Should be on the format component:runnable.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="EventsType">
+        <xs:all>
+            <xs:element name="timed_events" type="TimedEventsType" minOccurs="0"/>
+            <xs:element name="triggered_events" type="TriggeredEventsType" minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>
+
+    <xs:complexType name="TimedEventsType">
+        <xs:sequence>
+            <xs:element name="timed_event" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>A timer that triggers a runnable at a periodic interval.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the event.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="period_ms" type="xs:positiveInteger" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The period of the timer in milliseconds.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="runnable" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The runnable to call. Should be on the format component:runnable.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="TriggeredEventsType">
+        <xs:sequence>
+            <xs:element name="triggered_event" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>A trigger that runs a runnable when an input or custom trigger is written.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The name of the event.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="input" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>The input to trigger on. The format is component:input.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="custom_trigger_func" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>If set, specifies an external trigger instead of an input trigger. A function to check if the trigger is set needs to be implemented by the user, with the correct signature.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="runnable" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>The runnable to call. Should be on the format component:runnable.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

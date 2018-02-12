@@ -1,5 +1,4 @@
 import * as cytoscape from "cytoscape"
-import { Collection } from "cytoscape"
 import { dialog, ipcRenderer } from "electron"
 import { readFileSync } from "fs"
 import { log } from "util"
@@ -76,80 +75,6 @@ function parseXml(path: string) {
   createEdges("client_ports", "server_ports", "port_definition", "circle")
 
   const colors = ["hotpink", "orchid", "mediumpurple", "LightSkyBlue", "MediumAquaMarine", "LightSalmon", "Coral"]
-  // const style: cytoscape.Stylesheet = [
-  //   {
-  //     selector: ".default",
-  //     style: {
-  //       "border-opacity": 0,
-  //     },
-  //   },
-  //   {
-  //     selector: ".possibleEdge",
-  //     style: {
-  //       // display: "none",
-  //       // opacity: 0.1,
-  //       "line-color": "#404040",
-  //       "line-style": "dotted",
-  //       "target-arrow-color": "#404040",
-  //       "target-arrow-fill": "hollow",
-  //     },
-  //   },
-  //   {
-  //     selector: ".hidden",
-  //     style: {
-  //       display: "none",
-  //       // opacity: 0.1,
-  //     },
-  //   },
-  //   {
-  //     selector: ":selected",
-  //     style: {
-  //       "border-color": "darkGrey",
-  //       "border-opacity": 1,
-  //     },
-  //   },
-  //   {
-  //     selector: "node",
-  //     style: {
-  //       "background-color": "#505050",
-  //       "border-color": "white",
-  //       "border-width": "1",
-  //       "color": "white",
-  //       // "content": "data(name)",
-  //       "content"(ele: cytoscape.NodeCollection) {
-  //         return ele.id().replace(/_/g, " ")
-  //         // return capitalizeFirstLetter(ele.id().replace("_", " "))
-  //       },
-  //       "font-size": 8,
-  //       "height": "label",
-  //       "overlay-opacity": 0,
-  //       "padding": 6,
-  //       "shape": "roundrectangle",
-  //       "text-max-width": 50,
-  //       "text-valign": "center",
-  //       "text-wrap": "wrap",
-  //       "width": "label",
-  //     },
-  //   },
-  //   {
-  //     selector: "edge",
-  //     style: {
-  //       // "color": "white",
-  //       "curve-style": "bezier",
-  //       "font-size": 8,
-  //       // "target-arrow-shape": "data(shape)",
-  //       "width": 1,
-  //     },
-  //   },
-  //   {
-  //     selector: ".eh-handle",
-  //     style: {
-  //       height: 30,
-  //       opacity: 0,
-  //       width: 50,
-  //     },
-  //   },
-  // ]
 
   const cy = cytoscape({
     autoungrabify: true,
@@ -221,7 +146,6 @@ function parseXml(path: string) {
           // "color": "white",
           "curve-style": "bezier",
           "font-size": 8,
-          // "target-arrow-shape": "data(shape)",
           "width": 1,
         },
       },
@@ -252,12 +176,6 @@ function parseXml(path: string) {
       /* Deactivate other nodes */
       cy.nodes(".default").not(node.outgoers().connectedNodes()).style("events", "no")
       cy.nodes(".default").not(node.outgoers()).not(node).style("opacity", 0.3)
-      // cy.nodes(".default").not(node.outgoers()).not(node).animate({
-      //   duration: 0.1,
-      //   style: {
-      //     opacity: 0.3,
-      //   },
-      // })
     },
     hide() {
       cy.edges(".possibleEdge").not(".hidden").style("display", "element")
@@ -269,17 +187,8 @@ function parseXml(path: string) {
       cy.edges(".eh-ghost-edge").style("display", "none")
       const possibleEdge = sourceNode.edgesTo(targetNode).filter(".possibleEdge")
       possibleEdge.style("display", "none")
-      // const newEdge = sourceNode.edgesTo(targetNode).not(possibleEdge).first()
-      // newEdge.style("target-arrow-shape", possibleEdge.style("target-arrow-shape"))
       sourceNode.edgesTo(targetNode).last().style("target-arrow-shape",
         sourceNode.edgesTo(targetNode).first().style("target-arrow-shape"))
-      // console.log(possibleEdge.style("target-arrow-shape"));
-
-      // sourceNode.edgesTo(targetNode).forEach((e) => {
-      //   e.style("target-arrow-shape", possibleEdge.style("target-arrow-shape"))
-      //   console.log(e.style("target-arrow-shape"))
-      // })
-
     },
     previewoff(sourceNode: cytoscape.NodeCollection, targetNode: cytoscape.NodeCollection) {
       sourceNode.edgesTo(targetNode).filter(".possibleEdge").style("display", "element")
@@ -296,36 +205,31 @@ function parseXml(path: string) {
 
     },
   })
-  const layout = {
+  const dagreLayout = {
     animate: true,
     animationDuration: 500,
     name: "dagre",
   }
+  const layout = cy.layout(dagreLayout)
   cy.ready((e: any) => {
     cy.nodes().classes("default")
-    cy.layout(layout).run()
+    layout.run()
   })
-  cy.on("resize", () => cy.layout(layout).run())
+  cy.on("resize", () => layout.run())
 
   let onlyShowConnectedNodes = false
-  let removedNodes: Collection
+  let removedNodes: cytoscape.Collection
 
   ipcRenderer.on("switch-view", (event: any) => {
     onlyShowConnectedNodes = !onlyShowConnectedNodes
     if (onlyShowConnectedNodes) {
       const connectedNodes = cy.nodes().filter((ele) => ele.connectedEdges().not(".possibleEdge").length > 0)
-      // cy.nodes().not(connectedNodes).style("display", "none")
       removedNodes = cy.elements()
       cy.nodes().not(connectedNodes).remove()
-      // const erik = connectedNodes.makeLayout(layout)
-      cy.layout(layout).run()
-      // erik.run()
+      cy.elements().makeLayout(dagreLayout).run()
     } else {
-      cy.collection().remove()
-      cy.add(removedNodes)
-      cy.layout(layout).run()
-      // cy.nodes().positions(erik)
-      // cy.nodes().makeLayout(layout).run()
+      removedNodes.restore()
+      layout.run()
     }
   })
 }
