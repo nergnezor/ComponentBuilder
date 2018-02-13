@@ -25,10 +25,12 @@
     "typescript": "^2.7.1"
   },
   "dependencies": {
+    "@types/xmlbuilder": "0.0.32",
     "cytoscape": "^3.2.8",
     "cytoscape-dagre": "^2.2.0",
     "cytoscape-edgehandles": "^3.2.0",
     "electron": "^1.8.2",
-    "xml2json": "^0.11.0"
+    "xml2json": "^0.11.0",
+    "xmlbuilder": "^9.0.7"
   }
 }

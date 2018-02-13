@@ -1,9 +1,9 @@
 import * as cytoscape from "cytoscape"
 import { dialog, ipcRenderer } from "electron"
-import { readFileSync } from "fs"
+import { readFileSync, writeFileSync } from "fs"
 import { log } from "util"
 import { toJson } from "xml2json"
-// import * as autosarXsd from "./xmlns/autosar.xsd"
+import * as xmlBuilder from "xmlbuilder"
 import * as autosarXsd from "./../xmlns/autosar.xsd"
 
 // const metadata = wfs.document.rte.constructor().
@@ -27,16 +27,6 @@ ipcRenderer.on("selected-file", (event: any) => {
     })
 })
 
-interface INode {
-  id: string
-  name: string
-  inputs: any
-  outputs: any
-  // col: number
-  // row: number
-  receivers: INode[],
-}
-
 function parseXml(path: string) {
   const xmlFile = readFileSync(path)
   const json = toJson(xmlFile.toString())
@@ -45,13 +35,18 @@ function parseXml(path: string) {
 
   const edges: any = []
   const nodes: any = []
-  components.component.forEach((component) => {
+  components.component.forEach((component: any) => {
     component.id = component.name
-    console.log(component)
+    // console.log(component, component.outputs)
 
     nodes.push({ data: component })
   })
+  const xmlOutput = xmlBuilder.create(components.component[0])
+    .end({ pretty: true })
+  console.log(xmlOutput)
+  writeFileSync(__dirname + "/test.xml", xmlOutput.toString())
 
+  // return
   function createEdges(outputs: string, inputs: string, type: string, shape: string) {
     components.component.filter((c: any) => c[outputs]).forEach((sender: any) => {
       let outputArray: any = sender[outputs][outputs.slice(0, outputs.length - 1)]
