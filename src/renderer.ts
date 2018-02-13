@@ -3,6 +3,10 @@ import { dialog, ipcRenderer } from "electron"
 import { readFileSync } from "fs"
 import { log } from "util"
 import { toJson } from "xml2json"
+// import * as autosarXsd from "./xmlns/autosar.xsd"
+import * as autosarXsd from "./../xmlns/autosar.xsd"
+
+// const metadata = wfs.document.rte.constructor().
 const dagre = require("cytoscape-dagre")
 const edgehandles = require("cytoscape-edgehandles")
 dagre(cytoscape)
@@ -37,22 +41,23 @@ function parseXml(path: string) {
   const xmlFile = readFileSync(path)
   const json = toJson(xmlFile.toString())
   const jsObj = JSON.parse(json)
-
-  const components: INode[] = jsObj.rte.components.component
+  const components: autosarXsd.ComponentsType = jsObj.rte.components
 
   const edges: any = []
   const nodes: any = []
-  components.forEach((component) => {
+  components.component.forEach((component) => {
     component.id = component.name
+    console.log(component)
+
     nodes.push({ data: component })
   })
 
   function createEdges(outputs: string, inputs: string, type: string, shape: string) {
-    components.filter((c: any) => c[outputs]).forEach((sender: any) => {
+    components.component.filter((c: any) => c[outputs]).forEach((sender: any) => {
       let outputArray: any = sender[outputs][outputs.slice(0, outputs.length - 1)]
       outputArray = Array.isArray(outputArray) ? outputArray : [outputArray]
       for (const output of outputArray) {
-        components.filter((c: any) => c[inputs]).forEach((receiver: any) => {
+        components.component.filter((c: any) => c[inputs]).forEach((receiver: any) => {
           let inputArray: any = receiver[inputs][inputs.slice(0, inputs.length - 1)]
           inputArray = Array.isArray(inputArray) ? inputArray : [inputArray]
           for (const input of inputArray) {
