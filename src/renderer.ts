@@ -97,11 +97,11 @@ function parseXml(path: string) {
         selector: ".possibleEdge",
         style: {
           // display: "none",
-          // opacity: 0.1,
           "line-color": "#404040",
           "line-style": "dotted",
           "target-arrow-color": "#404040",
           "target-arrow-fill": "hollow",
+          "text-opacity": "0",
         },
       },
       //   {
@@ -143,9 +143,10 @@ function parseXml(path: string) {
       {
         selector: "edge",
         style: {
-          // "color": "white",
+          "color": "white",
           "curve-style": "bezier",
-          "font-size": 8,
+          "font-size": 10,
+          // "label": "data(type)",
           "width": 1,
         },
       },
@@ -187,21 +188,26 @@ function parseXml(path: string) {
       cy.edges(".eh-ghost-edge").style("display", "none")
       const possibleEdge = sourceNode.edgesTo(targetNode).filter(".possibleEdge")
       possibleEdge.style("display", "none")
-      sourceNode.edgesTo(targetNode).last().style("target-arrow-shape",
-        sourceNode.edgesTo(targetNode).first().style("target-arrow-shape"))
+      const firstEdge = sourceNode.edgesTo(targetNode).first()
+      const lastEdge = sourceNode.edgesTo(targetNode).last()
+      lastEdge.style("target-arrow-shape", firstEdge.style("target-arrow-shape"))
+      lastEdge.style("label", firstEdge.data("type").replace(/_/g, " "))
     },
     previewoff(sourceNode: cytoscape.NodeCollection, targetNode: cytoscape.NodeCollection) {
       sourceNode.edgesTo(targetNode).filter(".possibleEdge").style("display", "element")
       cy.edges(".eh-ghost-edge").style("display", "element")
     },
     stop() {
-      cy.edges().style("label", "")
+      // if (cy.nodes(":selected").length) { return }
       eh.hide()
     },
     complete(sourceNode: cytoscape.NodeCollection, targetNode: cytoscape.NodeCollection) {
       sourceNode.edgesTo(targetNode).filter(".possibleEdge").classes(".hidden")
+      const connectingEdges = sourceNode.edgesTo(targetNode)
+      const lastEdge = sourceNode.edgesTo(targetNode).last()
+      lastEdge.style("label", connectingEdges[connectingEdges.length - 1].style("label"))
       targetNode.select()
-      eh.show(targetNode)
+      // eh.show(targetNode)
 
     },
   })
