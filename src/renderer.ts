@@ -197,20 +197,34 @@ function parseXml(path: string) {
       sourceNode.edgesTo(targetNode).filter(".possibleEdge").style("display", "element")
       cy.edges(".eh-ghost-edge").style("display", "element")
     },
-    stop() {
+    cancel(a, b, c) {
+      console.log(a, b, c, "cancel")
+
       // if (cy.nodes(":selected").length) { return }
       eh.hide()
+    },
+    stop(a, b, c) {
+      console.log(a, b, c, "stop")
+
+      // if (cy.nodes(":selected").length) { return }
+      // eh.hide()
     },
     complete(sourceNode: cytoscape.NodeCollection, targetNode: cytoscape.NodeCollection) {
       sourceNode.edgesTo(targetNode).filter(".possibleEdge").classes(".hidden")
       const connectingEdges = sourceNode.edgesTo(targetNode)
       const lastEdge = sourceNode.edgesTo(targetNode).last()
       lastEdge.style("label", connectingEdges[connectingEdges.length - 1].style("label"))
-      targetNode.select()
+      // targetNode.select()
+      eh.hide()
+      // eh.hoverOver(targetNode)
       // eh.show(targetNode)
+      console.log(targetNode);
+      
 
     },
   })
+  eh.enableDrawMode()
+  
   const dagreLayout = {
     animate: true,
     animationDuration: 500,
