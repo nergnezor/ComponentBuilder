@@ -162,69 +162,89 @@ function parseXml(path: string) {
     userPanningEnabled: false,
     userZoomingEnabled: false,
   })
-  cy.on("tapdragout", "node", (event) => {
+  // cy.on("tapdragout", "node", (event) => {
+  //   const node: cytoscape.NodeCollection = event.target
+  //   if (node.hasClass("eh-handle") && !cy.edges(".eh-ghost-edge").length) {
+  //     eh.hide()
+  //   }
+  // })
+  cy.on("tapdragout tapdragover ehstart", "node", (event) => {
+    console.log(event)
+    if (eh.active) { return }
+
     const node: cytoscape.NodeCollection = event.target
-    if (node.hasClass("eh-handle") && !cy.edges(".eh-ghost-edge").length) {
-      eh.hide()
+    switch (event.type) {
+      case "tapdragover":
+        node.select()
+        /* Deactivate other nodes */
+        cy.nodes(".default").not(node.outgoers().connectedNodes()).style("events", "no")
+        cy.nodes(".default").not(node.outgoers()).not(node).style("opacity", 0.3)
+        break
+      case "tapdragout":
+        console.log(eh)
+        cy.edges(".possibleEdge").not(".hidden").style("display", "element")
+        cy.nodes(":selected").deselect()
+        cy.nodes().style("events", "yes")
+        cy.nodes().style("opacity", 1)
+        break
     }
   })
 
   const eh = cy.edgehandles({
     handlePosition: "middle middle",
     hoverDelay: 0,
-    show(node: cytoscape.NodeCollection) {
-      node.select()
-      /* Deactivate other nodes */
-      cy.nodes(".default").not(node.outgoers().connectedNodes()).style("events", "no")
-      cy.nodes(".default").not(node.outgoers()).not(node).style("opacity", 0.3)
-    },
-    hide() {
-      cy.edges(".possibleEdge").not(".hidden").style("display", "element")
-      cy.nodes(":selected").deselect()
-      cy.nodes().style("events", "yes")
-      cy.nodes().style("opacity", 1)
-    },
-    previewon(sourceNode: cytoscape.NodeCollection, targetNode: cytoscape.NodeCollection) {
-      cy.edges(".eh-ghost-edge").style("display", "none")
-      const possibleEdge = sourceNode.edgesTo(targetNode).filter(".possibleEdge")
-      possibleEdge.style("display", "none")
-      const firstEdge = sourceNode.edgesTo(targetNode).first()
-      const lastEdge = sourceNode.edgesTo(targetNode).last()
-      lastEdge.style("target-arrow-shape", firstEdge.style("target-arrow-shape"))
-      lastEdge.style("label", firstEdge.data("type").replace(/_/g, " "))
-    },
-    previewoff(sourceNode: cytoscape.NodeCollection, targetNode: cytoscape.NodeCollection) {
-      sourceNode.edgesTo(targetNode).filter(".possibleEdge").style("display", "element")
-      cy.edges(".eh-ghost-edge").style("display", "element")
-    },
-    cancel(a, b, c) {
-      console.log(a, b, c, "cancel")
+    // show(node: cytoscape.NodeCollection) {
+    //   node.select()
+    //   /* Deactivate other nodes */
+    //   cy.nodes(".default").not(node.outgoers().connectedNodes()).style("events", "no")
+    //   cy.nodes(".default").not(node.outgoers()).not(node).style("opacity", 0.3)
+    // },
+    // hide() {
+    //   cy.edges(".possibleEdge").not(".hidden").style("display", "element")
+    //   cy.nodes(":selected").deselect()
+    //   cy.nodes().style("events", "yes")
+    //   cy.nodes().style("opacity", 1)
+    // },
+    // previewon(sourceNode: cytoscape.NodeCollection, targetNode: cytoscape.NodeCollection) {
+    //   cy.edges(".eh-ghost-edge").style("display", "none")
+    //   const possibleEdge = sourceNode.edgesTo(targetNode).filter(".possibleEdge")
+    //   possibleEdge.style("display", "none")
+    //   const firstEdge = sourceNode.edgesTo(targetNode).first()
+    //   const lastEdge = sourceNode.edgesTo(targetNode).last()
+    //   lastEdge.style("target-arrow-shape", firstEdge.style("target-arrow-shape"))
+    //   lastEdge.style("label", firstEdge.data("type").replace(/_/g, " "))
+    // },
+    // previewoff(sourceNode: cytoscape.NodeCollection, targetNode: cytoscape.NodeCollection) {
+    //   sourceNode.edgesTo(targetNode).filter(".possibleEdge").style("display", "element")
+    //   cy.edges(".eh-ghost-edge").style("display", "element")
+    // },
+    // cancel(a, b, c) {
+    //   console.log(a, b, c, "cancel")
 
-      // if (cy.nodes(":selected").length) { return }
-      eh.hide()
-    },
-    stop(a, b, c) {
-      console.log(a, b, c, "stop")
+    //   // if (cy.nodes(":selected").length) { return }
+    //   eh.hide()
+    // },
+    // stop(a, b, c) {
+    //   console.log(a, b, c, "stop")
 
-      // if (cy.nodes(":selected").length) { return }
-      // eh.hide()
-    },
-    complete(sourceNode: cytoscape.NodeCollection, targetNode: cytoscape.NodeCollection) {
-      sourceNode.edgesTo(targetNode).filter(".possibleEdge").classes(".hidden")
-      const connectingEdges = sourceNode.edgesTo(targetNode)
-      const lastEdge = sourceNode.edgesTo(targetNode).last()
-      lastEdge.style("label", connectingEdges[connectingEdges.length - 1].style("label"))
-      // targetNode.select()
-      eh.hide()
-      // eh.hoverOver(targetNode)
-      // eh.show(targetNode)
-      console.log(targetNode);
-      
+    //   // if (cy.nodes(":selected").length) { return }
+    //   // eh.hide()
+    // },
+    // complete(sourceNode: cytoscape.NodeCollection, targetNode: cytoscape.NodeCollection) {
+    //   sourceNode.edgesTo(targetNode).filter(".possibleEdge").classes(".hidden")
+    //   const connectingEdges = sourceNode.edgesTo(targetNode)
+    //   const lastEdge = sourceNode.edgesTo(targetNode).last()
+    //   lastEdge.style("label", connectingEdges[connectingEdges.length - 1].style("label"))
+    //   // targetNode.select()
+    //   eh.hide()
+    //   // eh.hoverOver(targetNode)
+    //   // eh.show(targetNode)
+    //   console.log(targetNode);
 
-    },
+    // },
   })
   eh.enableDrawMode()
-  
+
   const dagreLayout = {
     animate: true,
     animationDuration: 500,
