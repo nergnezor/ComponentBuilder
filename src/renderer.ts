@@ -60,7 +60,7 @@ function parseXml(path: string) {
                 classes: "possibleEdge",
                 data: { source: sender.id, target: receiver.id, type: output.name },
                 style: {
-                  "label": output.name,
+                  "label": output.name.replace(/_/g, " "),
                   "target-arrow-shape": shape,
                 },
               })
@@ -90,10 +90,8 @@ function parseXml(path: string) {
       {
         selector: ".possibleEdge",
         style: {
-          // display: "none",
-          "line-color": "#404040",
           "line-style": "dotted",
-          "target-arrow-color": "#404040",
+          "opacity": 0.3
           "target-arrow-fill": "hollow",
           "text-opacity": "0",
         },
@@ -105,11 +103,8 @@ function parseXml(path: string) {
           "border-color": "white",
           "border-width": "0",
           "color": "white",
-          // "border-opacity": 0,
-          // "content": "data(name)",
-          "content"(ele: cytoscape.NodeCollection) {
+          "content"(ele) {
             return ele.id().replace(/_/g, " ")
-            // return capitalizeFirstLetter(ele.id().replace("_", " "))
           },
           "font-size": 12,
           "height": "label",
@@ -129,7 +124,7 @@ function parseXml(path: string) {
           "curve-style": "bezier",
           "events": "no",
           "font-size": 10,
-          // "label": "data(type)",
+          "target-arrow-color": "white",
           "width": 1,
         },
       },
@@ -138,7 +133,7 @@ function parseXml(path: string) {
     userZoomingEnabled: false,
   })
 
-  cy.on("tapdragout tapdragover ehcomplete ehpreviewon ehpreviewoff ehcancel ehstop select unselect ehshow ehstart",
+  cy.on("tapdragout tapdragover ehcomplete ehpreviewon ehpreviewoff ehcancel ehstop select unselect",
     (event, source, target, edge) => {
       // console.log(event.type)
       switch (event.type) {
@@ -176,6 +171,9 @@ function parseXml(path: string) {
         case "ehstop":
           break
         case "ehcomplete":
+          if (!edge.style("label")) {
+            edge.remove()
+          }
           source.deselect()
           target.select()
           break
