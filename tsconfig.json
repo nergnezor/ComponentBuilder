@@ -1,11 +1,9 @@
 {
     "compilerOptions": {
       "module": "commonjs",
-      "noImplicitAny": true,
-      "sourceMap": true,
+      "pretty": true,
+      // "sourceMap": true,
       "outDir": "dist",
-      // "allowJs": true,
-      // "declaration": true,
       "baseUrl": ".",
       "paths": {
         "*": ["node_modules/*"]
